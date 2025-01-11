@@ -51,3 +51,10 @@ repos:
     -   id: end-of-file-fixer
         name: end-of-file-fixer
         description: Ensures all files are either empty or end with a newline
+-   repo: local
+    hooks:
+    -   id: prevent-commit-main
+        name: Prevent commits on main
+        description: Ensure we don't commit directly to main
+        entry: ./scripts/prevent_commit_main.sh
+        language: script
