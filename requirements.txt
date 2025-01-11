@@ -1,0 +1,4 @@
+mypy
+numpy
+pre-commit
+pytest
