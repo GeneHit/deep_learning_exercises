@@ -1,6 +1,5 @@
 def AND(x1: float, x2: float) -> bool:
-    """
-    Perform the AND operation on two float inputs using a neural network perceptron.
+    """Perform the AND operation on two float inputs using a neural network perceptron.
 
     Args:
         x1 (float): The first perceptron's input value.
@@ -13,8 +12,7 @@ def AND(x1: float, x2: float) -> bool:
 
 
 def NAND(x1: float, x2: float) -> bool:
-    """
-    Perform the NAND operation on two float inputs using a neural network perceptron.
+    """Perform the NAND operation on two float inputs using a neural network perceptron.
 
     Args:
         x1 (float): The first perceptron's input value.
@@ -27,8 +25,7 @@ def NAND(x1: float, x2: float) -> bool:
 
 
 def OR(x1: float, x2: float) -> bool:
-    """
-    Perform the OR operation on two float inputs using a neural network perceptron.
+    """Perform the OR operation on two float inputs using a neural network perceptron.
 
     Args:
         x1 (float): The first perceptron's input value.
@@ -41,8 +38,7 @@ def OR(x1: float, x2: float) -> bool:
 
 
 def XOR(x1: float, x2: float) -> bool:
-    """
-    Perform the XOR operation on two float inputs using a neural network perceptron.
+    """Perform the XOR operation on two float inputs using a neural network perceptron.
 
     Args:
         x1 (float): The first perceptron's input value.
