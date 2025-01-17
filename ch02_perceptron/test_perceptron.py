@@ -1,5 +1,5 @@
 import pytest
-from .perceptron import AND, NAND, OR, XOR
+from ch02_perceptron.perceptron import AND, NAND, OR, XOR
 
 
 @pytest.mark.parametrize(
@@ -52,7 +52,3 @@ def test_OR(x1: float, x2: float, expected: bool) -> None:
 )
 def test_XOR(x1: float, x2: float, expected: bool) -> None:
     assert XOR(x1, x2) == expected
-
-
-if __name__ == "__main__":
-    pytest.main()
