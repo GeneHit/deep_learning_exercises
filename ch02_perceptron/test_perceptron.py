@@ -1,4 +1,5 @@
 import pytest
+
 from ch02_perceptron.perceptron import AND, NAND, OR, XOR
 
 

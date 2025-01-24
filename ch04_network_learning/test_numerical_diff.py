@@ -1,7 +1,7 @@
-import pytest
-import numpy as np
-
 from typing import Callable
+
+import numpy as np
+import pytest
 
 from ch04_network_learning.b_numerical_diffirentiation import (
     numerical_diff_1d,
@@ -27,7 +27,11 @@ ATOL = 1e-4
             1 / (np.cos(np.pi / 6) ** 2),
         ),  # Tangent function
         (lambda x: 1 / x, 1.0, -1.0),  # Reciprocal function
-        (lambda x: np.sqrt(x), 4.0, 1 / (2 * np.sqrt(4.0))),  # Square root function
+        (
+            lambda x: np.sqrt(x),
+            4.0,
+            1 / (2 * np.sqrt(4.0)),
+        ),  # Square root function
     ],
 )
 def test_numerical_diff_1d(

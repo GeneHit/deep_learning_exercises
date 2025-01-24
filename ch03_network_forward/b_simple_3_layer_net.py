@@ -29,7 +29,8 @@ class Simple3LayerNN:
     """
 
     def __init__(
-        self, init_param: dict[str, np.typing.NDArray[np.floating]] | None = None
+        self,
+        init_param: dict[str, np.typing.NDArray[np.floating]] | None = None,
     ) -> None:
         """Initialize weights and biases."""
         if init_param is not None:
