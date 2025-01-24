@@ -10,7 +10,7 @@ repos:
     -   id: nbstripout
         files: ".ipynb"
         require_serial: true
-# Ruff is a linter and formatter that replaces flake8, isort, and black
+# Ruff is a linter and formatter that replaces flake8, and black
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.9.1
     hooks:

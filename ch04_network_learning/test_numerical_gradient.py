@@ -1,11 +1,12 @@
-import pytest
-import numpy as np
-
 from typing import Callable
+
+import numpy as np
+import pytest
+
 from ch04_network_learning.c_numerical_gradient import (
+    GradientWith1LayerNN,
     numerical_gradient,
     numerical_gradient_descend,
-    GradientWith1LayerNN,
 )
 
 ATOL = 1e-5
@@ -59,7 +60,13 @@ def test_numerical_gradient(
     [
         # TODO: decide a better step_num with the later implementation
         # 1D examples
-        (lambda x: np.sum(x**2), np.array([3.0, 4.0]), 0.1, 100, np.array([0.0, 0.0])),
+        (
+            lambda x: np.sum(x**2),
+            np.array([3.0, 4.0]),
+            0.1,
+            100,
+            np.array([0.0, 0.0]),
+        ),
         # 2D examples
         (
             lambda x: np.sum(x**2),

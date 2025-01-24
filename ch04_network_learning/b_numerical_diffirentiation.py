@@ -1,5 +1,6 @@
-import numpy as np
 from typing import Callable
+
+import numpy as np
 
 
 def numerical_diff_1d(f: Callable[[float], float], x0: float) -> float:

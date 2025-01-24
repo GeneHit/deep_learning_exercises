@@ -1,5 +1,6 @@
-import pytest
 import numpy as np
+import pytest
+
 from ch03_network_forward.b_simple_3_layer_net import Simple3LayerNN
 
 

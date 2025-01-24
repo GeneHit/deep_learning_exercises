@@ -1,11 +1,12 @@
-import pytest
 import numpy as np
+import pytest
+
 from ch03_network_forward.a_activation_function import (
-    sigmoid,
-    step,
-    relu,
     identity_function,
+    relu,
+    sigmoid,
     softmax,
+    step,
 )
 
 ATOL = 1e-4
@@ -39,7 +40,10 @@ def test_sigmoid(
         (np.array([0.0]), np.array([0], dtype=int)),
         (np.array([1.0]), np.array([1], dtype=int)),
         (np.array([-1.0]), np.array([0], dtype=int)),
-        (np.array([[0.0, 1.0], [-1.0, 2.0]]), np.array([[0, 1], [0, 1]], dtype=int)),
+        (
+            np.array([[0.0, 1.0], [-1.0, 2.0]]),
+            np.array([[0, 1], [0, 1]], dtype=int),
+        ),
         (
             np.array([[[0.0], [1.0]], [[-1.0], [2.0]]]),
             np.array([[[0], [1]], [[0], [1]]], dtype=int),
@@ -58,7 +62,10 @@ def test_step(
         (np.array([0.0]), np.array([0.0])),
         (np.array([1.0]), np.array([1.0])),
         (np.array([-1.0]), np.array([0.0])),
-        (np.array([[0.0, 1.0], [-1.0, 2.0]]), np.array([[0.0, 1.0], [0.0, 2.0]])),
+        (
+            np.array([[0.0, 1.0], [-1.0, 2.0]]),
+            np.array([[0.0, 1.0], [0.0, 2.0]]),
+        ),
         (
             np.array([[[0.0], [1.0]], [[-1.0], [2.0]]]),
             np.array([[[0.0], [1.0]], [[0.0], [2.0]]]),
@@ -77,7 +84,10 @@ def test_relu(
         (np.array([0.0]), np.array([0.0])),
         (np.array([1.0]), np.array([1.0])),
         (np.array([-1.0]), np.array([-1.0])),
-        (np.array([[0.0, 1.0], [-1.0, 2.0]]), np.array([[0.0, 1.0], [-1.0, 2.0]])),
+        (
+            np.array([[0.0, 1.0], [-1.0, 2.0]]),
+            np.array([[0.0, 1.0], [-1.0, 2.0]]),
+        ),
         (
             np.array([[[0.0], [1.0]], [[-1.0], [2.0]]]),
             np.array([[[0.0], [1.0]], [[-1.0], [2.0]]]),

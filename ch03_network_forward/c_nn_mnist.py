@@ -12,10 +12,14 @@ class Simple3LayerNN:
     This network is fully connected and feedforward.
     """
 
-    def __init__(self, init_param: dict[str, np.typing.NDArray[np.floating]]) -> None:
+    def __init__(
+        self, init_param: dict[str, np.typing.NDArray[np.floating]]
+    ) -> None:
         """Initialize weights and biases."""
         for key in ("W1", "b1", "W2", "b2", "W3", "b3"):
-            assert key in init_param, f"{key} is not in the parameter dictionary."
+            assert key in init_param, (
+                f"{key} is not in the parameter dictionary."
+            )
         self._parameters = init_param
 
     def _predict(
@@ -37,7 +41,9 @@ class Simple3LayerNN:
         raise NotImplementedError
 
     def accuracy_with_for_cycle(
-        self, x: np.typing.NDArray[np.floating], t: np.typing.NDArray[np.floating]
+        self,
+        x: np.typing.NDArray[np.floating],
+        t: np.typing.NDArray[np.floating],
     ) -> float:
         """Calculate accuracy of the network.
 
@@ -53,7 +59,9 @@ class Simple3LayerNN:
         raise NotImplementedError
 
     def accuracy_with_batch(
-        self, x: np.typing.NDArray[np.floating], t: np.typing.NDArray[np.floating]
+        self,
+        x: np.typing.NDArray[np.floating],
+        t: np.typing.NDArray[np.floating],
     ) -> float:
         """Calculate accuracy of the network.
 

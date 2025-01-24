@@ -1,10 +1,10 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from ch05_backpropagation.c_backprop_network import TwoLayerNN as BackPropTwoLayerNN
+from common.base import NueralNet
 
 
-class TwoLayerNN:
+class TwoLayerNN(NueralNet):
     """A two-layer neural network.
 
     Graphical representation of the network:
@@ -37,30 +37,43 @@ class TwoLayerNN:
         """
         return self._params
 
-    def predict(self, x: NDArray[np.floating]) -> NDArray[np.floating]:
+    def predict(
+        self,
+        x: NDArray[np.floating],
+        train_flag: bool = False,
+    ) -> NDArray[np.floating]:
         """Predict the output for the given input.
 
         Parameters:
             x (NDArray[np.floating]): Input data.
+            train_flag (bool): Training flag.
 
         Returns:
             NDArray[np.floating]: Predicted output.
         """
         raise NotImplementedError("The predict method is not implemented yet.")
 
-    def loss(self, x: NDArray[np.floating], t: NDArray[np.floating]) -> float:
+    def loss(
+        self,
+        x: NDArray[np.floating],
+        t: NDArray[np.floating],
+        train_flag: bool = False,
+    ) -> float:
         """Calculate the loss for the given input and target output.
 
         Parameters:
             x (NDArray[np.floating]): Input data.
             t (NDArray[np.floating]): Target output.
+            train_flag (bool): Training flag.
 
         Returns:
             float: Loss value.
         """
         raise NotImplementedError("The loss method is not implemented yet.")
 
-    def accuracy(self, x: NDArray[np.floating], t: NDArray[np.floating]) -> float:
+    def accuracy(
+        self, x: NDArray[np.floating], t: NDArray[np.floating]
+    ) -> float:
         """Calculate the accuracy for the given input and target output.
 
         Parameters:
@@ -104,12 +117,13 @@ class TwoLayerNN:
 
 
 def training(
-    network: TwoLayerNN | BackPropTwoLayerNN,
+    network: NueralNet,
     x_train: NDArray[np.floating],
     t_train: NDArray[np.floating],
     learning_rate: float,
     batch_size: int,
     epochs: int,
+    verbose: bool = False,
 ) -> list[float]:
     """Train the network using the given training data.
 
@@ -123,6 +137,7 @@ def training(
         learning_rate (float): Learning rate for training.
         batch_size (int): Batch size for training.
         epochs (int): Number of epochs for training.
+        verbose (bool): Flag to print the training loss every epoch.
 
     Returns:
         training losses : tuple[list[float], list[float], list[float]]"""

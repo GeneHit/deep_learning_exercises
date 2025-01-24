@@ -1,9 +1,10 @@
 # copied from https://github.com/oreilly-japan/deep-learning-from-scratch/blob/master/dataset/mnist.py
-import urllib.request
-import os.path
 import gzip
-import pickle
 import os
+import os.path
+import pickle
+import urllib.request
+
 import numpy as np
 
 # url_base = 'http://yann.lecun.com/exdb/mnist/'

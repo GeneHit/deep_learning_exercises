@@ -1,7 +1,9 @@
 import numpy as np
 
 
-def sigmoid(x: np.typing.NDArray[np.floating]) -> np.typing.NDArray[np.floating]:
+def sigmoid(
+    x: np.typing.NDArray[np.floating],
+) -> np.typing.NDArray[np.floating]:
     """Sigmoid activation function.
 
     The sigmoid function is defined as:
@@ -63,7 +65,9 @@ def identity_function(
     raise NotImplementedError
 
 
-def softmax(x: np.typing.NDArray[np.floating]) -> np.typing.NDArray[np.floating]:
+def softmax(
+    x: np.typing.NDArray[np.floating],
+) -> np.typing.NDArray[np.floating]:
     """
     Softmax activation function.
 

@@ -1,6 +1,6 @@
-import numpy as np
-
 from typing import Callable
+
+import numpy as np
 
 
 def numerical_gradient(
@@ -83,7 +83,9 @@ class GradientWith1LayerNN:
         raise NotImplementedError
 
     def loss(
-        self, x: np.typing.NDArray[np.floating], t: np.typing.NDArray[np.floating]
+        self,
+        x: np.typing.NDArray[np.floating],
+        t: np.typing.NDArray[np.floating],
     ) -> float:
         """Calculate loss of the simple neural network.
 
@@ -99,7 +101,9 @@ class GradientWith1LayerNN:
         raise NotImplementedError
 
     def gradient(
-        self, x: np.typing.NDArray[np.floating], t: np.typing.NDArray[np.floating]
+        self,
+        x: np.typing.NDArray[np.floating],
+        t: np.typing.NDArray[np.floating],
     ) -> np.typing.NDArray[np.floating]:
         """Calculate gradient of the simple neural network.
 
