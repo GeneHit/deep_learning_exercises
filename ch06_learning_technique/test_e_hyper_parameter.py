@@ -4,6 +4,7 @@ import numpy as np
 from ch06_learning_technique.e_hyper_parameter import (
     hyper_parameter_optimization,
 )
+from common.utils import shuffle_dataset
 from dataset.mnist import load_mnist
 
 
@@ -15,7 +16,7 @@ def test_hyper_parameter_optimization() -> None:
     t_train = t_train[:500]
     validation_rate = 0.20
     validation_num = int(x_train.shape[0] * validation_rate)
-    # x_train, t_train = shuffle_dataset(x_train, t_train)
+    x_train, t_train = shuffle_dataset(x_train, t_train)
     x_val = x_train[:validation_num]
     t_val = t_train[:validation_num]
     x_train = x_train[validation_num:]

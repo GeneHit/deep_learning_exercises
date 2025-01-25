@@ -35,3 +35,7 @@ class Dropout(Layer):
     def backward(self, dout: NDArray[np.floating]) -> NDArray[np.floating]:
         """Backward pass of the dropout layer."""
         raise NotImplementedError
+
+    def param_grads(self) -> dict[str, NDArray[np.floating]]:
+        """Return the gradients of the parameters."""
+        return {}
