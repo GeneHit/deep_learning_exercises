@@ -1,3 +1,4 @@
 matplotlib=3.10.0
 mypy=1.14.1
 pre-commit=4.0.1
+scipy=1.15.1

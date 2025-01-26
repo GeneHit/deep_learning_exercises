@@ -1,10 +1,10 @@
 from ch06_learning_technique.a_optimization import Adam
 from ch06_learning_technique.d_trainer import NormalTraier
 from ch07_cnn.e_simple_cnn import (
-    ConvParams,
-    PoolParams,
+    ConvConfig,
+    PoolConfig,
     SimpleCNN,
-    SimpleCNNParams,
+    SimpleCNNConfig,
 )
 from dataset.mnist import load_mnist
 
@@ -18,12 +18,12 @@ def test_simple_cnn() -> None:
 
     epochs = 20
 
-    cnn_params = SimpleCNNParams(
+    cnn_params = SimpleCNNConfig(
         input_dim=(1, 28, 28),
-        conv_params=ConvParams(
+        conv_params=ConvConfig(
             filter_num=30, filter_h=5, filter_w=5, stride=1, pad=0
         ),
-        pooling_params=PoolParams(pool_h=2, pool_w=2, stride=2, pad=0),
+        pooling_params=PoolConfig(pool_h=2, pool_w=2, stride=2, pad=0),
         hidden_size=100,
         output_size=10,
     )

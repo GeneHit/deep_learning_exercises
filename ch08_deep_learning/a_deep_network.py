@@ -1,3 +1,4 @@
+import pickle
 from dataclasses import dataclass
 
 import numpy as np
@@ -7,40 +8,21 @@ from common.base import LayerConfig, NueralNet
 
 
 @dataclass(frozen=True, kw_only=True)
-class ConvConfig(LayerConfig):
-    """Convolutional layer config."""
+class DeepConvNetConfig:
+    """Simple Convolutional Neural Network parameters.
 
-    filter_num: int
-    filter_h: int
-    filter_w: int
-    pad: int
-    stride: int
-
-
-@dataclass(frozen=True, kw_only=True)
-class PoolConfig(LayerConfig):
-    """Pool layer config."""
-
-    pool_h: int
-    pool_w: int
-    stride: int
-    pad: int
-
-
-@dataclass(frozen=True, kw_only=True)
-class SimpleCNNConfig:
-    """Simple Convolutional Neural Network config.
-
-    (conv - relu - max_pool) - (flatten - affine - relu) - affine - softmax
-            layer1                  layer2(hidden)         output
+    diagram:
+        conv - relu - conv- relu - max_pool -
+        conv - relu - conv- relu - max_pool -
+        conv - relu - conv- relu - max_pool -
+        affine - relu - dropout - affine - dropout - softmax
     """
 
     input_dim: tuple[int, int, int]
     """The dimensions of the data, not including the batch size."""
 
-    conv_params: ConvConfig
-
-    pooling_params: PoolConfig
+    hidden_layer_configs: tuple[LayerConfig, ...]
+    """The configurations of the hidden layers."""
 
     hidden_size: int
     """The number of neurons in the hidden layer2."""
@@ -54,15 +36,20 @@ class SimpleCNNConfig:
     """
 
 
-class SimpleCNN(NueralNet):
-    """Simple Convolutional Neural Network.
+class DeepConvNet(NueralNet):
+    """Deep Convolutional Neural Network.
 
-    (conv - relu - max_pool) - (flatten - affine - relu) - affine - softmax
-            layer1                  layer2(hidden)         output
+    diagram:
+        conv - relu - conv- relu - max_pool -
+        conv - relu - conv- relu - max_pool -
+        conv - relu - conv- relu - max_pool -
+        affine - relu - dropout - affine - dropout - softmax
     """
 
-    def __init__(self, config: SimpleCNNConfig) -> None:
+    def __init__(self, config: DeepConvNetConfig) -> None:
         self._config = config
+        # just used for loading the existed parameters
+        self._params: dict[str, NDArray[np.floating]] | None = {}
 
         raise NotImplementedError
 
@@ -100,3 +87,20 @@ class SimpleCNN(NueralNet):
     ) -> dict[str, NDArray[np.floating]]:
         """See the base class."""
         raise NotImplementedError
+
+    def save_params(self, file_name: str = "params.pkl") -> None:
+        params = self.named_parameters()
+        with open(file_name, "wb") as f:
+            pickle.dump(params, f)
+
+    def load_params(self, file_name: str = "params.pkl") -> None:
+        with open(file_name, "rb") as f:
+            params = pickle.load(f)
+
+        if self._params is None:
+            # get the mutable parameters of every layer, meaning that it gets
+            # the reference of the parameters and can update the parameters.
+            self._params = self.named_parameters()
+
+        for key, val in params.items():
+            self._params[key] = val
