@@ -1,4 +1,5 @@
 import abc
+from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
@@ -56,6 +57,16 @@ class Layer(abc.ABC):
 
         This have to be called after the backward pass.
         """
+
+
+@dataclass(frozen=True, kw_only=True)
+class LayerConfig(abc.ABC):
+    """Base class for the configuration of the layers."""
+
+    # @abc.abstractmethod
+    # def create(self) -> Layer:
+    #     """Create the layer based on the configuration."""
+    #     raise NotImplementedError
 
 
 class NueralNet(abc.ABC):

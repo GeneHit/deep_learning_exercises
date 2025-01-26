@@ -118,6 +118,10 @@ class AlexNet(NueralNet):
     which are key components of the original AlexNet. The architecture
     is designed to process images of size 227x227x3 (RGB channels).
 
+    Notice: The original AlexNet used Local Response Normalization, but
+    this implementation uses Batch Normalization. BatchNorm is more
+    effective and easier to implement.
+
     Layers:
     1. Input: 227x227x3 (RGB image)
     2. Conv1: Convolutional layer
@@ -127,7 +131,7 @@ class AlexNet(NueralNet):
         - Padding: 0
         - Output: 55x55x96
         - Activation: ReLU
-    3. Norm1: Local Response Normalization (LRN)
+    3. Norm1: BatchNorm (original paper used Local Response Normalization)
     4. Pool1: Max Pooling
         - Kernel size: 3x3
         - Stride: 2
@@ -140,7 +144,7 @@ class AlexNet(NueralNet):
         - Groups: 2 (split across GPUs in original paper)
         - Output: 27x27x256
         - Activation: ReLU
-    6. Norm2: Local Response Normalization (LRN)
+    6. Norm2: BatchNorm (original paper used Local Response Normalization)
     7. Pool2: Max Pooling
         - Kernel size: 3x3
         - Stride: 2
