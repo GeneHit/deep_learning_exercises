@@ -3,7 +3,7 @@ import pytest
 from numpy.typing import NDArray
 
 from ch07_cnn.c_convolution_layer import (
-    Convolution,
+    Conv2d,
     col2im,
     conv_output_size,
     im2col,
@@ -248,7 +248,7 @@ def test_convolution(
     expected_db: NDArray[np.floating],
     expected_dx: NDArray[np.floating],
 ) -> None:
-    conv = Convolution(w0, b0, stride, pad)
+    conv = Conv2d(w0, b0, stride, pad)
 
     output_y = conv.forward(input_x)
     dx = conv.backward(dout)

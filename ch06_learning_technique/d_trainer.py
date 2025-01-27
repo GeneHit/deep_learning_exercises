@@ -1,10 +1,10 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from common.base import NueralNet, Optimizer, Trainer
+from common.base import NueralNet, Optimizer, TrainerBase
 
 
-class NormalTraier(Trainer):
+class NormalTraier(TrainerBase):
     def __init__(
         self,
         network: NueralNet,
@@ -15,7 +15,6 @@ class NormalTraier(Trainer):
         t_test: NDArray[np.floating],
         epochs: int,
         mini_batch_size: int,
-        evaluate_train_data: bool = True,
         evaluate_test_data: bool = True,
         evaluated_sample_per_epoch: int | None = None,
         verbose: bool = False,
@@ -34,7 +33,7 @@ class NormalTraier(Trainer):
     def train(self) -> None:
         raise NotImplementedError
 
-    def get_final_accuracy(self) -> float:
+    def get_final_accuracy(self) -> tuple[float, float]:
         raise NotImplementedError
 
     def get_history_accuracy(self) -> tuple[list[float], list[float]]:

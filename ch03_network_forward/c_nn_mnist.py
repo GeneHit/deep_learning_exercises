@@ -50,8 +50,8 @@ class Simple3LayerNN:
         ** You have to implement this method using for loop (one by one data). **
 
         Parameters:
-            x (np.typing.NDArray[np.floating]): Input array.
-            t (np.typing.NDArray[np.floating]): Target array.
+            x (np.typing.NDArray[np.floating]): Input array, 2D array now.
+            t (np.typing.NDArray[np.floating]): Target array, 2D array now.
 
         Returns:
             float: Accuracy of the network.
@@ -68,8 +68,8 @@ class Simple3LayerNN:
         ** You have to implement this method without using for loop (one by one batch). **
 
         Parameters:
-            x (np.typing.NDArray[np.floating]): Input array.
-            t (np.typing.NDArray[np.floating]): Target array.
+            x (np.typing.NDArray[np.floating]): Input array, 2D array now.
+            t (np.typing.NDArray[np.floating]): Target array, 2D array now.
 
         Returns:
             float: Accuracy of the network.

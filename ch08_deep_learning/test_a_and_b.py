@@ -1,8 +1,17 @@
 from ch06_learning_technique.a_optimization import Adam
-from ch06_learning_technique.d_trainer import NormalTraier
-from ch07_cnn.e_simple_cnn import ConvConfig, PoolConfig
-from ch08_deep_learning.a_deep_network import DeepConvNet, DeepConvNetConfig
+from ch08_deep_learning.a_deep_network import Deep2dNet
 from ch08_deep_learning.b_data_augmentation import augment_mnist_data
+from common.evaluation import calculate_single_label_accuracy
+from common.layer_config import (
+    AffineConfig,
+    Conv2dConfig,
+    Deep2dNetConfig,
+    Dropout2dConfig,
+    MaxPool2dConfig,
+    ReLuConfig,
+    SoftmaxWithLossConfig,
+)
+from common.trainer import LayerTraier
 from dataset.mnist import load_mnist
 
 
@@ -25,26 +34,85 @@ def _test_deep_cnn(
             x_train, t_train, augmentation_factor=1.5
         )
 
-    net_config = DeepConvNetConfig(
+    # diagram:
+    #     conv - relu - conv- relu - max_pool -
+    #     conv - relu - conv- relu - max_pool -
+    #     conv - relu - conv- relu - max_pool -
+    #     affine - relu - dropout - affine - dropout - softmax
+    net_config = Deep2dNetConfig(
         input_dim=(1, 28, 28),
         hidden_layer_configs=(
-            ConvConfig(filter_num=16, filter_h=3, filter_w=3, stride=1, pad=1),
-            ConvConfig(filter_num=16, filter_h=3, filter_w=3, stride=1, pad=1),
-            PoolConfig(pool_h=2, pool_w=2, stride=2, pad=0),
-            ConvConfig(filter_num=32, filter_h=3, filter_w=3, stride=1, pad=1),
-            ConvConfig(filter_num=32, filter_h=3, filter_w=3, stride=1, pad=2),
-            PoolConfig(pool_h=2, pool_w=2, stride=2, pad=0),
-            ConvConfig(filter_num=64, filter_h=3, filter_w=3, stride=1, pad=1),
-            ConvConfig(filter_num=64, filter_h=3, filter_w=3, stride=1, pad=1),
-            PoolConfig(pool_h=2, pool_w=2, stride=2, pad=0),
+            Conv2dConfig(
+                in_channels=1,
+                out_channels=16,
+                kernel_size=(3, 3),
+                stride=1,
+                pad=1,
+                param_suffix="1",
+            ),
+            ReLuConfig(),
+            Conv2dConfig(
+                in_channels=16,
+                out_channels=16,
+                kernel_size=(3, 3),
+                stride=1,
+                pad=1,
+                param_suffix="2",
+            ),
+            ReLuConfig(),
+            MaxPool2dConfig(kernel_size=(2, 2), stride=2, pad=0),
+            Conv2dConfig(
+                in_channels=16,
+                out_channels=32,
+                kernel_size=(3, 3),
+                stride=1,
+                pad=1,
+                param_suffix="3",
+            ),
+            ReLuConfig(),
+            Conv2dConfig(
+                in_channels=32,
+                out_channels=32,
+                kernel_size=(3, 3),
+                stride=1,
+                pad=2,
+                param_suffix="4",
+            ),
+            ReLuConfig(),
+            MaxPool2dConfig(kernel_size=(2, 2), stride=2, pad=0),
+            Conv2dConfig(
+                in_channels=32,
+                out_channels=64,
+                kernel_size=(3, 3),
+                stride=1,
+                pad=1,
+                param_suffix="5",
+            ),
+            ReLuConfig(),
+            Conv2dConfig(
+                in_channels=64,
+                out_channels=64,
+                kernel_size=(3, 3),
+                stride=1,
+                pad=1,
+                param_suffix="6",
+            ),
+            ReLuConfig(),
+            MaxPool2dConfig(kernel_size=(2, 2), stride=2, pad=0),
+            AffineConfig(in_size=64 * 3 * 3, out_size=50, param_suffix="7"),
+            ReLuConfig(),
+            Dropout2dConfig(dropout_ratio=0.5),
+            AffineConfig(in_size=50, out_size=10, param_suffix="8"),
+            Dropout2dConfig(dropout_ratio=0.5),
         ),
-        hidden_size=50,
-        output_size=10,
+        # load_params="deep_2d_net_params.pkl",
     )
-    network = DeepConvNet(config=net_config)
+    network = net_config.create()
     optimizer = Adam(lr=0.001)
-    trainer = NormalTraier(
+    trainer = LayerTraier(
         network=network,
+        loss=SoftmaxWithLossConfig().create(),
+        evaluation_fn=calculate_single_label_accuracy,
         optimizer=optimizer,
         x_train=x_train,
         t_train=t_train,
@@ -57,12 +125,12 @@ def _test_deep_cnn(
     trainer.train()
 
     # Check the final accuracy
-    train_acc = network.accuracy(x_train, t_train)
-    test_acc = network.accuracy(x_test, t_test)
+    train_acc, test_acc = trainer.get_final_accuracy()
     print(f"train acc, test acc | {train_acc:.4f}, {test_acc:.4f}")
     assert train_acc >= 0.99
     assert test_acc >= 0.99
 
     if save_params:
-        network.save_params("deep_convnet_params.pkl")
+        assert isinstance(network, Deep2dNet)  # for mypy
+        network.save_params("deep_2d_net_params.pkl")
         print("Saved Network Parameters!")

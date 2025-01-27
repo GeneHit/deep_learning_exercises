@@ -82,7 +82,7 @@ def col2im(
     raise NotImplementedError
 
 
-class Convolution(Layer):
+class Conv2d(Layer):
     """Convolution layer.
 
     Usually, the input data is assumed to be a 4D array.  The 4D array is

@@ -10,6 +10,7 @@ from dataset.mnist import load_mnist
 
 
 def test_simple_cnn() -> None:
+    # returning a nx1x28x28 array for x and a nx10 array for t
     (x_train, t_train), (x_test, t_test) = load_mnist(flatten=False)
     # Reduce the dataset size to speed up the test, so that run the test for
     # verifying the correctness of the code.

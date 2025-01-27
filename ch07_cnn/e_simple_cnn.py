@@ -3,11 +3,11 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
-from common.base import LayerConfig, NueralNet
+from common.base import NueralNet
 
 
 @dataclass(frozen=True, kw_only=True)
-class ConvConfig(LayerConfig):
+class ConvConfig:
     """Convolutional layer config."""
 
     filter_num: int
@@ -18,7 +18,7 @@ class ConvConfig(LayerConfig):
 
 
 @dataclass(frozen=True, kw_only=True)
-class PoolConfig(LayerConfig):
+class PoolConfig:
     """Pool layer config."""
 
     pool_h: int
@@ -59,6 +59,8 @@ class SimpleCNN(NueralNet):
 
     (conv - relu - max_pool) - (flatten - affine - relu) - affine - softmax
             layer1                  layer2(hidden)         output
+
+    using 4D-array data.
     """
 
     def __init__(self, config: SimpleCNNConfig) -> None:

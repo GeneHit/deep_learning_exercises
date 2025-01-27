@@ -13,10 +13,11 @@ class Layer(abc.ABC):
         """Return the parameters of the network.
 
         Note: this return a reference, the dict and the NDArray are mutable.
-        It can be used for updating the parameters outside.
+        It can be used for updating the parameters by the outside
+        inplace operation +=, -=.
         """
 
-    def train_flag(self, flag: bool) -> None:
+    def train(self, flag: bool) -> None:
         """Set the training flag of the layer.
 
         During training, some layer may need to change their behavior, for
@@ -28,6 +29,25 @@ class Layer(abc.ABC):
                 if neccesary.
         """
         pass
+
+    def forward_to_loss(
+        self,
+        x: NDArray[np.floating],
+        t: NDArray[np.floating],
+    ) -> float:
+        """Forward pass of the layer.
+
+        BE CAREFUL: This method is used for the layers that are used in the
+        loss layer, like the softmax layer.
+
+        Parameters:
+            x (NDArray[np.floating]): Input data.
+            t (NDArray[np.floating]): Target output.
+
+        Returns:
+            float: Loss value.
+        """
+        raise NotImplementedError
 
     @abc.abstractmethod
     def forward(self, x: NDArray[np.floating]) -> NDArray[np.floating]:
@@ -63,10 +83,19 @@ class Layer(abc.ABC):
 class LayerConfig(abc.ABC):
     """Base class for the configuration of the layers."""
 
-    # @abc.abstractmethod
-    # def create(self) -> Layer:
-    #     """Create the layer based on the configuration."""
-    #     raise NotImplementedError
+    @abc.abstractmethod
+    def create(
+        self, parameters: dict[str, NDArray[np.floating]] | None = None
+    ) -> Layer:
+        """Create the layer based on the configuration.
+
+        Parameters:
+            parameters : dict[str, NDArray[np.floating]]
+                Dictionary of parameters for the layer. If provided, it will
+                be used for the initialization of the layer, instead of using
+                the provided configured initializer. This is useful for loading
+                the trained parameters.
+        """
 
 
 class NueralNet(abc.ABC):
@@ -154,6 +183,8 @@ class Optimizer(abc.ABC):
     ) -> None:
         """Update the parameters using the gradients.
 
+        Have to use the inplace operation to update the parameters.
+
         Parameters:
             params : dict[str, NDArray[np.floating]]
                 Dictionary of parameters to be updated.
@@ -162,7 +193,7 @@ class Optimizer(abc.ABC):
         """
 
 
-class Trainer(abc.ABC):
+class TrainerBase(abc.ABC):
     """A class for training a neural network."""
 
     def __init__(
@@ -224,10 +255,13 @@ class Trainer(abc.ABC):
         raise NotImplementedError("The train method is not implemented yet.")
 
     @abc.abstractmethod
-    def get_final_accuracy(self) -> float:
+    def get_final_accuracy(self) -> tuple[float, float]:
         """Get the final accuracy of the network after training.
 
         This method may avoid one more accuracy calculation outside.
+
+        Returns:
+            tuple[float, float]: Training and test accuracy.
         """
         raise NotImplementedError
 

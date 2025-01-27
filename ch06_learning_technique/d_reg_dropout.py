@@ -4,7 +4,7 @@ from numpy.typing import NDArray
 from common.base import Layer
 
 
-class Dropout(Layer):
+class Dropout2d(Layer):
     """Dropout layer.
 
     During training, randomly set some of the input elements to zero.
@@ -24,7 +24,7 @@ class Dropout(Layer):
         """See the base class."""
         return {}
 
-    def train_flag(self, flag: bool) -> None:
+    def train(self, flag: bool) -> None:
         """See the base class."""
         raise NotImplementedError
 

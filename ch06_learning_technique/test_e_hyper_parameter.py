@@ -1,11 +1,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import NDArray
 
 from ch06_learning_technique.e_hyper_parameter import (
     hyper_parameter_optimization,
 )
-from common.utils import shuffle_dataset
 from dataset.mnist import load_mnist
+
+
+def shuffle_dataset(
+    x: NDArray[np.floating], t: NDArray[np.floating]
+) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
+    permutation = np.random.permutation(x.shape[0])
+    return x[permutation], t[permutation]
 
 
 def test_hyper_parameter_optimization() -> None:
@@ -14,9 +21,13 @@ def test_hyper_parameter_optimization() -> None:
 
     x_train = x_train[:500]
     t_train = t_train[:500]
+
+    # shuffle the dataset avoiding the same order
+    x_train, t_train = shuffle_dataset(x_train, t_train)
+
+    # split the dataset into training and validation sets
     validation_rate = 0.20
     validation_num = int(x_train.shape[0] * validation_rate)
-    x_train, t_train = shuffle_dataset(x_train, t_train)
     x_val = x_train[:validation_num]
     t_val = t_train[:validation_num]
     x_train = x_train[validation_num:]

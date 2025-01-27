@@ -26,7 +26,9 @@ def mnist_data() -> tuple[
         tuple: Tuple containing training and test data.
     """
     # Load MNIST data, returning a 60000x784 array for x and a nx10 array for t
-    ((x_train, t_train), (x_test, t_test)) = load_mnist(normalize=True)
+    ((x_train, t_train), (x_test, t_test)) = load_mnist(
+        normalize=True, flatten=True
+    )
     # Use only 300 samples for testing the overfitting
     return (x_train[:1000], t_train[:1000]), (x_test, t_test)
 

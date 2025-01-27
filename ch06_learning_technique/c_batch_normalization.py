@@ -4,7 +4,7 @@ from numpy.typing import NDArray
 from common.base import Layer
 
 
-class BatchNormalization(Layer):
+class BatchNorm2d(Layer):
     """Batch normalization layer.
 
     Paper: http://arxiv.org/abs/1502.03167
@@ -43,7 +43,7 @@ class BatchNormalization(Layer):
         """See the base class."""
         return self._params
 
-    def train_flag(self, flag: bool) -> None:
+    def train(self, flag: bool) -> None:
         """See the base class."""
         raise NotImplementedError
 

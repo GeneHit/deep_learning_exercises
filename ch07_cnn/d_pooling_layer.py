@@ -15,10 +15,20 @@ class MaxPool2d(Layer):
     """
 
     def __init__(
-        self, pool_h: int, pool_w: int, stride: int = 2, pad: int = 0
+        self, kenel_size: tuple[int, int], stride: int = 2, pad: int = 0
     ) -> None:
-        self._pool_h = pool_h
-        self._pool_w = pool_w
+        """Initialize the MaxPool2d layer.
+
+        Parameters:
+            kenel_size: tuple[int, int]
+                The size of the pooling window. The tuple should have two
+                integers: (height, width).
+            stride: int
+                The stride of the pooling operation.
+            pad: int
+                The padding applied to the input data.
+        """
+        self._kenel_size = kenel_size
         self._stride = stride
         self._pad = pad
 
@@ -68,10 +78,9 @@ class AvgPool2d(Layer):
     """
 
     def __init__(
-        self, pool_h: int, pool_w: int, stride: int = 2, pad: int = 0
+        self, kenel_size: tuple[int, int], stride: int = 2, pad: int = 0
     ) -> None:
-        self._pool_h = pool_h
-        self._pool_w = pool_w
+        self._kenel_size = kenel_size
         self._stride = stride
         self._pad = pad
 

@@ -9,12 +9,11 @@ class TestMaxPool2d:
     """Tests for MaxPool2d layer."""
 
     @pytest.mark.parametrize(
-        "pool_h, pool_w, stride, pad, input_x, expected_output",
+        "kenel_size, stride, pad, input_x, expected_output",
         [
             # Example 1: Simple 2x2 pooling, no padding
             (
-                2,
-                2,
+                (2, 2),
                 2,
                 0,
                 np.array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
@@ -22,8 +21,7 @@ class TestMaxPool2d:
             ),
             # Example 2: Single channel, larger stride
             (
-                2,
-                2,
+                (2, 2),
                 3,
                 0,
                 np.array(
@@ -44,25 +42,23 @@ class TestMaxPool2d:
     )
     def test_forward(
         self,
-        pool_h: int,
-        pool_w: int,
+        kenel_size: tuple[int, int],
         stride: int,
         pad: int,
         input_x: NDArray[np.floating],
         expected_output: NDArray[np.floating],
     ) -> None:
         """Test the forward function of MaxPool2d."""
-        layer = MaxPool2d(pool_h, pool_w, stride, pad)
+        layer = MaxPool2d(kenel_size, stride, pad)
         output = layer.forward(input_x)
         np.testing.assert_array_almost_equal(output, expected_output)
 
     @pytest.mark.parametrize(
-        "pool_h, pool_w, stride, pad, input_x, dout, expected_dx",
+        "kenel_size, stride, pad, input_x, dout, expected_dx",
         [
             # Example 1: Backpropagation for 2x2 pooling, no padding
             (
-                2,
-                2,
+                (2, 2),
                 2,
                 0,
                 np.array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
@@ -71,8 +67,7 @@ class TestMaxPool2d:
             ),
             # Example 2: Backpropagation for a larger input
             (
-                2,
-                2,
+                (2, 2),
                 2,
                 0,
                 np.array([[[[1, 3, 1], [4, 2, 6], [7, 5, 9]]]]),
@@ -83,8 +78,7 @@ class TestMaxPool2d:
     )
     def test_backward(
         self,
-        pool_h: int,
-        pool_w: int,
+        kenel_size: tuple[int, int],
         stride: int,
         pad: int,
         input_x: NDArray[np.floating],
@@ -92,7 +86,7 @@ class TestMaxPool2d:
         expected_dx: NDArray[np.floating],
     ) -> None:
         """Test the backward function of MaxPool2d."""
-        layer = MaxPool2d(pool_h, pool_w, stride, pad)
+        layer = MaxPool2d(kenel_size, stride, pad)
         # Run forward pass to store indices for backward
         layer.forward(input_x)
         dx = layer.backward(dout)
@@ -103,12 +97,11 @@ class TestAvgPool2d:
     """Tests for AvgPool2d layer."""
 
     @pytest.mark.parametrize(
-        "pool_h, pool_w, stride, pad, input_x, expected_output",
+        "kenel_size, stride, pad, input_x, expected_output",
         [
             # Example 1: Simple 2x2 pooling, no padding
             (
-                2,
-                2,
+                (2, 2),
                 2,
                 0,
                 np.array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
@@ -116,8 +109,7 @@ class TestAvgPool2d:
             ),
             # Example 2: Single channel, stride = 3
             (
-                2,
-                2,
+                (2, 2),
                 3,
                 0,
                 np.array(
@@ -138,25 +130,23 @@ class TestAvgPool2d:
     )
     def test_forward(
         self,
-        pool_h: int,
-        pool_w: int,
+        kenel_size: tuple[int, int],
         stride: int,
         pad: int,
         input_x: NDArray[np.floating],
         expected_output: NDArray[np.floating],
     ) -> None:
         """Test the forward function of AvgPool2d."""
-        layer = AvgPool2d(pool_h, pool_w, stride, pad)
+        layer = AvgPool2d(kenel_size, stride, pad)
         output = layer.forward(input_x)
         np.testing.assert_array_almost_equal(output, expected_output)
 
     @pytest.mark.parametrize(
-        "pool_h, pool_w, stride, pad, input_x, dout, expected_dx",
+        "kenel_size, stride, pad, input_x, dout, expected_dx",
         [
             # Example 1: Backpropagation for 2x2 pooling, no padding
             (
-                2,
-                2,
+                (2, 2),
                 2,
                 0,
                 np.array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
@@ -167,8 +157,7 @@ class TestAvgPool2d:
             ),
             # Example 2: Backpropagation for larger input
             (
-                2,
-                2,
+                (2, 2),
                 2,
                 0,
                 np.array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),
@@ -179,8 +168,7 @@ class TestAvgPool2d:
     )
     def test_backward(
         self,
-        pool_h: int,
-        pool_w: int,
+        kenel_size: tuple[int, int],
         stride: int,
         pad: int,
         input_x: NDArray[np.floating],
@@ -188,7 +176,7 @@ class TestAvgPool2d:
         expected_dx: NDArray[np.floating],
     ) -> None:
         """Test the backward function of AvgPool2d."""
-        layer = AvgPool2d(pool_h, pool_w, stride, pad)
+        layer = AvgPool2d(kenel_size, stride, pad)
         # Run forward pass to store indices for backward
         layer.forward(input_x)
         dx = layer.backward(dout)

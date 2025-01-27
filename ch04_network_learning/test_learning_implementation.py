@@ -5,7 +5,7 @@ from dataset.mnist import load_mnist
 def test_training() -> None:
     # Load MNIST data, returning a nx784 array for x and a nx10 array for t
     ((x_train, t_train), (x_test, t_test)) = load_mnist(
-        normalize=True, one_hot_label=True
+        normalize=True, flatten=True, one_hot_label=True
     )
 
     # Initialize the neural network

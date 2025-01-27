@@ -12,7 +12,7 @@ class TwoLayerNN(NueralNet):
         Input Layer      Hidden Layer 1      Output Layer
             x  --------> (signoid ) -------->(softmax)->y
 
-    This network is fully connected and feedforward.
+    This network is fully connected and feedforward, which means using 2D array.
     """
 
     def __init__(

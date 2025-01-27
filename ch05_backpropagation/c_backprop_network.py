@@ -9,11 +9,10 @@ class TwoLayerNN(NueralNet):
 
     Graphical representation of the network:
 
-        Input Layer   Hidden Layer 1    Output Layer
-            x  ------> (signoid ) ------>(softmax)--->y ----> CrossEntropyLoss
-                                                      t -----/
+    x ---affine---ReLU---affine---softmax---y----> CrossEntropyLoss
+                                          t -----/
 
-    This network is fully connected and feedforward.
+    This network is fully connected and feedforward, using 2D-array data.
     """
 
     def __init__(
@@ -29,7 +28,7 @@ class TwoLayerNN(NueralNet):
         """Return the parameters of the network.
 
         Note: this return a reference, the dict and the NDArray are mutable.
-        It can be used for updating the parameters outside.
+        It can be used for updating the parameters by outside +=, -=.
         """
         raise NotImplementedError
 
