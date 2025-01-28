@@ -18,7 +18,7 @@ class SGD(Optimizer):
         """
         self._lr = lr
 
-    def update(
+    def one_step(
         self,
         params: dict[str, NDArray[np.floating]],
         grads: dict[str, NDArray[np.floating]],
@@ -47,7 +47,7 @@ class Momentum(Optimizer):
         self._lr = lr
         self._momentum = momentum
 
-    def update(
+    def one_step(
         self,
         params: dict[str, NDArray[np.floating]],
         grads: dict[str, NDArray[np.floating]],
@@ -74,7 +74,7 @@ class AdaGrad(Optimizer):
         """
         self._lr = lr
 
-    def update(
+    def one_step(
         self,
         params: dict[str, NDArray[np.floating]],
         grads: dict[str, NDArray[np.floating]],
@@ -103,7 +103,7 @@ class RMSProp(Optimizer):
         self._lr = lr
         self._decay_rate = decay_rate
 
-    def update(
+    def one_step(
         self,
         params: dict[str, NDArray[np.floating]],
         grads: dict[str, NDArray[np.floating]],
@@ -139,7 +139,7 @@ class Adam(Optimizer):
         self._beta1 = beta1
         self._beta2 = beta2
 
-    def update(
+    def one_step(
         self,
         params: dict[str, NDArray[np.floating]],
         grads: dict[str, NDArray[np.floating]],

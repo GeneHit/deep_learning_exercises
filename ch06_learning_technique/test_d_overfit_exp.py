@@ -4,8 +4,15 @@ import pytest
 from numpy.typing import NDArray
 
 from ch06_learning_technique.a_optimization import SGD
-from ch06_learning_technique.d_reg_weight_decay import MultiLinearNN
-from ch06_learning_technique.d_trainer import NormalTraier
+from ch06_learning_technique.d_reg_weight_decay import LayerTraier
+from common.evaluation import single_label_accuracy
+from common.layer_config import (
+    AffineConfig,
+    DropoutConfig,
+    ReLUConfig,
+    SequentialConfig,
+    SoftmaxWithLossConfig,
+)
 from dataset.mnist import load_mnist
 
 EPOCHS = 200
@@ -39,7 +46,7 @@ def overfit_nn(
         tuple[NDArray[np.floating], NDArray[np.floating]],
         tuple[NDArray[np.floating], NDArray[np.floating]],
     ],
-) -> NormalTraier:
+) -> LayerTraier:
     """Train a overfitting NN without batch normalization and dropout.
 
     This is used for comparing the overfitting with weight decay and dropout.
@@ -48,14 +55,26 @@ def overfit_nn(
     ((x_train, t_train), (x_test, t_test)) = mnist_data
 
     # Initialization
-    network = MultiLinearNN(
-        input_size=784,
-        hidden_sizes=HIDDEN_SIZES,
-        output_size=10,
+    config = SequentialConfig(
+        # input_dim=(784,),
+        hidden_layer_configs=(
+            AffineConfig(in_size=784, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=10, initializer="he_normal"),
+        ),
     )
+    network = config.create()
     optimizer = SGD(lr=0.01)
-    trainer = NormalTraier(
+    trainer = LayerTraier(
         network=network,
+        loss=SoftmaxWithLossConfig().create(),
+        evaluation_fn=single_label_accuracy,
         optimizer=optimizer,
         x_train=x_train,
         t_train=t_train,
@@ -63,8 +82,8 @@ def overfit_nn(
         t_test=t_test,
         epochs=EPOCHS,
         mini_batch_size=100,
+        evaluate_test_data=False,
     )
-
     # Train the network
     trainer.train()
 
@@ -72,7 +91,7 @@ def overfit_nn(
 
 
 def test_overfit_with_weight_decay(
-    overfit_nn: NormalTraier,
+    overfit_nn: LayerTraier,
     mnist_data: tuple[
         tuple[NDArray[np.floating], NDArray[np.floating]],
         tuple[NDArray[np.floating], NDArray[np.floating]],
@@ -83,15 +102,26 @@ def test_overfit_with_weight_decay(
     ((x_train, t_train), (x_test, t_test)) = mnist_data
 
     # Initialization
-    network = MultiLinearNN(
-        input_size=784,
-        hidden_sizes=HIDDEN_SIZES,
-        output_size=10,
-        weight_decay_lambda=0.1,
+    config = SequentialConfig(
+        # input_dim=(784,),
+        hidden_layer_configs=(
+            AffineConfig(in_size=784, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=10, initializer="he_normal"),
+        ),
     )
+    network = config.create()
     optimizer = SGD(lr=0.01)
-    trainer = NormalTraier(
+    trainer = LayerTraier(
         network=network,
+        loss=SoftmaxWithLossConfig().create(),
+        evaluation_fn=single_label_accuracy,
         optimizer=optimizer,
         x_train=x_train,
         t_train=t_train,
@@ -99,6 +129,8 @@ def test_overfit_with_weight_decay(
         t_test=t_test,
         epochs=EPOCHS,
         mini_batch_size=100,
+        evaluate_test_data=False,
+        weight_decay_lambda=0.1,
     )
 
     # Train the network
@@ -124,7 +156,7 @@ def test_overfit_with_weight_decay(
 
 
 def test_overfit_with_dropout(
-    overfit_nn: NormalTraier,
+    overfit_nn: LayerTraier,
     mnist_data: tuple[
         tuple[NDArray[np.floating], NDArray[np.floating]],
         tuple[NDArray[np.floating], NDArray[np.floating]],
@@ -135,16 +167,30 @@ def test_overfit_with_dropout(
     ((x_train, t_train), (x_test, t_test)) = mnist_data
 
     # Initialization
-    network = MultiLinearNN(
-        input_size=784,
-        hidden_sizes=HIDDEN_SIZES,
-        output_size=10,
-        use_dropout=True,
-        dropout_ratio=0.2,
+    config = SequentialConfig(
+        # input_dim=(784,),
+        hidden_layer_configs=(
+            AffineConfig(in_size=784, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            DropoutConfig(),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            DropoutConfig(),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            DropoutConfig(),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            DropoutConfig(),
+            AffineConfig(in_size=100, out_size=10, initializer="he_normal"),
+        ),
     )
+    network = config.create()
     optimizer = SGD(lr=0.01)
-    trainer = NormalTraier(
+    trainer = LayerTraier(
         network=network,
+        loss=SoftmaxWithLossConfig().create(),
+        evaluation_fn=single_label_accuracy,
         optimizer=optimizer,
         x_train=x_train,
         t_train=t_train,
@@ -152,6 +198,7 @@ def test_overfit_with_dropout(
         t_test=t_test,
         epochs=EPOCHS,
         mini_batch_size=100,
+        evaluate_test_data=False,
     )
 
     # Train the network

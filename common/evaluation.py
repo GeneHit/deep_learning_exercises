@@ -6,11 +6,10 @@ from common.base import Layer
 THRESHOLD_for_MultiLable = 0.9
 
 
-def calculate_single_label_accuracy(
+def single_label_accuracy(
     network: Layer, x: NDArray[np.floating], t: NDArray[np.floating]
 ) -> float:
-    """
-    Calculate the accuracy for a single-label classification model.
+    """Calculate the accuracy for a single-label classification model.
 
     This function evaluates the accuracy of a single-label classification model by
     comparing the predicted class labels with the true labels. The predictions are
@@ -47,7 +46,7 @@ def calculate_single_label_accuracy(
     return accuracy
 
 
-def calculate_multilabel_accuracy(
+def multilabel_accuracy(
     network: Layer, x: NDArray[np.floating], t: NDArray[np.floating]
 ) -> float:
     """Calculate the accuracy for a multi-label classification model.

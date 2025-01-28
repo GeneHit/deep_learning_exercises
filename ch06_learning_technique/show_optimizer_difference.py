@@ -50,7 +50,7 @@ def process_one_optimizer(
         y_history.append(pos["y"][0])
 
         grads["x"], grads["y"] = df(pos["x"], pos["y"])
-        optimizer.update(pos, grads)
+        optimizer.one_step(pos, grads)
 
     return x_history, y_history
 

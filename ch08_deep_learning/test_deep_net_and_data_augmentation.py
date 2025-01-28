@@ -1,31 +1,30 @@
 from ch06_learning_technique.a_optimization import Adam
-from ch08_deep_learning.a_deep_network import Deep2dNet
-from ch08_deep_learning.b_data_augmentation import augment_mnist_data
-from common.evaluation import calculate_single_label_accuracy
+from ch06_learning_technique.d_reg_weight_decay import LayerTraier, Sequential
+from ch08_deep_learning.a_data_augmentation import augment_mnist_data
+from common.evaluation import single_label_accuracy
 from common.layer_config import (
     AffineConfig,
     Conv2dConfig,
-    Deep2dNetConfig,
     Dropout2dConfig,
     MaxPool2dConfig,
-    ReLuConfig,
+    ReLUConfig,
+    SequentialConfig,
     SoftmaxWithLossConfig,
 )
-from common.trainer import LayerTraier
 from dataset.mnist import load_mnist
 
 
 def test_deep_conv_net() -> None:
     # set save_params to True to save the parameters
-    _test_deep_cnn(save_params=False)
+    _test_deep_conv_net(save_params=False)
 
 
 def test_deep_conv_net_with_data_augmentation() -> None:
     # set save_params to True to save the parameters
-    _test_deep_cnn(augmente_data=True, save_params=False)
+    _test_deep_conv_net(augmente_data=True, save_params=False)
 
 
-def _test_deep_cnn(
+def _test_deep_conv_net(
     augmente_data: bool = False, save_params: bool = False
 ) -> None:
     (x_train, t_train), (x_test, t_test) = load_mnist(flatten=False)
@@ -39,8 +38,8 @@ def _test_deep_cnn(
     #     conv - relu - conv- relu - max_pool -
     #     conv - relu - conv- relu - max_pool -
     #     affine - relu - dropout - affine - dropout - softmax
-    net_config = Deep2dNetConfig(
-        input_dim=(1, 28, 28),
+    net_config = SequentialConfig(
+        # input_dim=(1, 28, 28),
         hidden_layer_configs=(
             Conv2dConfig(
                 in_channels=1,
@@ -50,7 +49,7 @@ def _test_deep_cnn(
                 pad=1,
                 param_suffix="1",
             ),
-            ReLuConfig(),
+            ReLUConfig(),
             Conv2dConfig(
                 in_channels=16,
                 out_channels=16,
@@ -59,7 +58,7 @@ def _test_deep_cnn(
                 pad=1,
                 param_suffix="2",
             ),
-            ReLuConfig(),
+            ReLUConfig(),
             MaxPool2dConfig(kernel_size=(2, 2), stride=2, pad=0),
             Conv2dConfig(
                 in_channels=16,
@@ -69,7 +68,7 @@ def _test_deep_cnn(
                 pad=1,
                 param_suffix="3",
             ),
-            ReLuConfig(),
+            ReLUConfig(),
             Conv2dConfig(
                 in_channels=32,
                 out_channels=32,
@@ -78,7 +77,7 @@ def _test_deep_cnn(
                 pad=2,
                 param_suffix="4",
             ),
-            ReLuConfig(),
+            ReLUConfig(),
             MaxPool2dConfig(kernel_size=(2, 2), stride=2, pad=0),
             Conv2dConfig(
                 in_channels=32,
@@ -88,7 +87,7 @@ def _test_deep_cnn(
                 pad=1,
                 param_suffix="5",
             ),
-            ReLuConfig(),
+            ReLUConfig(),
             Conv2dConfig(
                 in_channels=64,
                 out_channels=64,
@@ -97,10 +96,10 @@ def _test_deep_cnn(
                 pad=1,
                 param_suffix="6",
             ),
-            ReLuConfig(),
+            ReLUConfig(),
             MaxPool2dConfig(kernel_size=(2, 2), stride=2, pad=0),
             AffineConfig(in_size=64 * 3 * 3, out_size=50, param_suffix="7"),
-            ReLuConfig(),
+            ReLUConfig(),
             Dropout2dConfig(dropout_ratio=0.5),
             AffineConfig(in_size=50, out_size=10, param_suffix="8"),
             Dropout2dConfig(dropout_ratio=0.5),
@@ -112,7 +111,7 @@ def _test_deep_cnn(
     trainer = LayerTraier(
         network=network,
         loss=SoftmaxWithLossConfig().create(),
-        evaluation_fn=calculate_single_label_accuracy,
+        evaluation_fn=single_label_accuracy,
         optimizer=optimizer,
         x_train=x_train,
         t_train=t_train,
@@ -131,6 +130,6 @@ def _test_deep_cnn(
     assert test_acc >= 0.99
 
     if save_params:
-        assert isinstance(network, Deep2dNet)  # for mypy
+        assert isinstance(network, Sequential)  # for mypy
         network.save_params("deep_2d_net_params.pkl")
         print("Saved Network Parameters!")

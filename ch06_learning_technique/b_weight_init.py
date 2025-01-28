@@ -1,6 +1,23 @@
 import numpy as np
 from numpy.typing import NDArray
 
+NN_FLOAT_TYPE = np.float32
+
+
+def compute_fan_in_and_fan_out(
+    weight_shape: tuple[int, ...],
+) -> tuple[int, int]:
+    """Compute fan_in and fan_out based on the weight shape."""
+    match len(weight_shape):
+        case 2:  # Affine layer
+            fan_in, fan_out = weight_shape[0], weight_shape[1]
+        case 4:  # Convolution layer
+            fan_in = weight_shape[1] * weight_shape[2] * weight_shape[3]
+            fan_out = weight_shape[0] * weight_shape[2] * weight_shape[3]
+        case _:
+            raise ValueError("The weight shape must be 2D or 4D.")
+    return fan_in, fan_out
+
 
 def generate_init_weight(
     weight_shape: tuple[int, ...],

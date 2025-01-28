@@ -12,6 +12,21 @@ class ReLU(Layer):
         x  ----> ReLU: max(0, x) ----> y
     """
 
+    def __init__(self, inplace: bool = False) -> None:
+        """Initialize the layer.
+
+        Parameters:
+            inplace : bool
+                If True, the operation is performed inplace, meaning the
+                input tensor is directly modified without allocating additional
+                memory for the output tensor. This can save memory and improve
+                computational efficiency, particularly for large models or
+                inputs. However, use with caution as it modifies the input
+                data directly, which may lead to unintended side effects
+                if the input is reused elsewhere.
+        """
+        self._inplace = inplace
+
     def named_params(self) -> dict[str, NDArray[np.floating]]:
         return {}
 

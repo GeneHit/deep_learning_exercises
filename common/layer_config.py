@@ -37,13 +37,19 @@ from ch05_backpropagation.b_layer import (
     Softmax,
     SoftmaxWithLoss,
 )
-from ch06_learning_technique.c_batch_normalization import BatchNorm2d
-from ch06_learning_technique.d_reg_dropout import Dropout2d
+from ch06_learning_technique.b_weight_init import (
+    generate_init_bias,
+    generate_init_weight,
+)
+from ch06_learning_technique.c_batch_normalization import (
+    BatchNorm1d,
+    BatchNorm2d,
+)
+from ch06_learning_technique.d_reg_dropout import Dropout, Dropout2d
+from ch06_learning_technique.d_reg_weight_decay import Sequential
 from ch07_cnn.c_convolution_layer import Conv2d
 from ch07_cnn.d_pooling_layer import AvgPool2d, Flatten, MaxPool2d
-from ch08_deep_learning.a_deep_network import Deep2dNet
 from common.base import Layer, LayerConfig
-from common.initialization import generate_init_bias, generate_init_weight
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -133,14 +139,23 @@ class AvgPool2dConfig(LayerConfig):
 
 
 @dataclass(frozen=True, kw_only=True)
-class BatchNorm2DConfig(LayerConfig):
-    """Configuration for the Batch Normalization layer."""
+class BatchNorm1dConfig(LayerConfig):
+    """Configuration for the BatchNorm1d layer."""
 
-    in_size: int
-    """The input size of the layer."""
+    num_feature: int
+    """The number of features in the input tensor."""
 
     momentum: float = 0.9
     """The momentum for the moving average."""
+
+    affine: bool = True
+    """If True, learnable affine parameters (gamma and beta) are used."""
+
+    track_running_stats: bool = True
+    """If True, running mean and variance are tracked during training."""
+
+    eps: float = 1e-5
+    """A small constant added to the denominator for numerical stability."""
 
     param_suffix: str = ""
     """The suffix for the layer's parameter, which should be unique.
@@ -148,9 +163,11 @@ class BatchNorm2DConfig(LayerConfig):
     The name of the parameter will be `gamma_{param_suffix}` and `beta_{param_suffix}`.
     """
 
-    def create(
+    def _get_params(
         self, parameters: dict[str, NDArray[np.floating]] | None = None
-    ) -> Layer:
+    ) -> tuple[
+        tuple[str, NDArray[np.floating]], tuple[str, NDArray[np.floating]]
+    ]:
         gamma_name = f"gamma_{self.param_suffix}"
         beta_name = f"beta_{self.param_suffix}"
         if parameters is not None:
@@ -159,16 +176,43 @@ class BatchNorm2DConfig(LayerConfig):
             beta = parameters[beta_name]
         else:
             gamma = generate_init_bias(
-                bias_shape=(self.in_size,), initializer="ones"
+                bias_shape=(self.num_feature,), initializer="ones"
             )
             beta = generate_init_bias(
-                bias_shape=(self.in_size,), initializer="zeros"
+                bias_shape=(self.num_feature,), initializer="zeros"
             )
 
-        return BatchNorm2d(
-            gamma=(gamma_name, gamma),
-            beta=(beta_name, beta),
+        return (gamma_name, gamma), (beta_name, beta)
+
+    def create(
+        self, parameters: dict[str, NDArray[np.floating]] | None = None
+    ) -> Layer:
+        gamma, beta = self._get_params(parameters)
+        return BatchNorm1d(
+            gamma=gamma,
+            beta=beta,
             momentum=self.momentum,
+            affine=self.affine,
+            track_running_stats=self.track_running_stats,
+            eps=self.eps,
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class BatchNorm2dConfig(BatchNorm1dConfig):
+    """Configuration for the BatchNormal2d layer."""
+
+    def create(
+        self, parameters: dict[str, NDArray[np.floating]] | None = None
+    ) -> Layer:
+        gamma, beta = self._get_params(parameters)
+        return BatchNorm2d(
+            gamma=gamma,
+            beta=beta,
+            momentum=self.momentum,
+            affine=self.affine,
+            track_running_stats=self.track_running_stats,
+            eps=self.eps,
         )
 
 
@@ -252,6 +296,19 @@ class Conv2dConfig(LayerConfig):
 
 
 @dataclass(frozen=True, kw_only=True)
+class DropoutConfig(LayerConfig):
+    """Configuration for the Dropout layer."""
+
+    dropout_ratio: float = 0.5
+    """The ratio of the neurons to drop during training."""
+
+    def create(
+        self, parameters: dict[str, NDArray[np.floating]] | None = None
+    ) -> Layer:
+        return Dropout(dropout_ratio=self.dropout_ratio)
+
+
+@dataclass(frozen=True, kw_only=True)
 class Dropout2dConfig(LayerConfig):
     """Configuration for the Dropout layer."""
 
@@ -289,13 +346,42 @@ class MaxPool2dConfig(AvgPool2dConfig):
 
 
 @dataclass(frozen=True, kw_only=True)
-class ReLuConfig(LayerConfig):
+class ReLUConfig(LayerConfig):
     """Configuration for the ReLU layer."""
+
+    inplace: bool = False
 
     def create(
         self, parameters: dict[str, NDArray[np.floating]] | None = None
     ) -> Layer:
-        return ReLU()
+        return ReLU(inplace=self.inplace)
+
+
+@dataclass(frozen=True, kw_only=True)
+class SequentialConfig(LayerConfig):
+    """Configuration for the Sequential layer.
+
+    diagram:
+        input -- layers -- output
+    """
+
+    hidden_layer_configs: tuple[LayerConfig, ...]
+    """The configurations of the hidden layers in order.
+
+    If we provide the loss function with the last layer for the trainer
+    independently, we do not need to include the last layer in this list.
+    """
+
+    load_params: str | None = None
+    """The file to load the parameters for the network."""
+
+    def create(
+        self, parameters: dict[str, NDArray[np.floating]] | None = None
+    ) -> Layer:
+        params = decide_params(self.load_params, parameters)
+
+        layers = create_layers(self.hidden_layer_configs, params)
+        return Sequential(tuple(layers))
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -328,45 +414,6 @@ class SoftmaxWithLossConfig(LayerConfig):
         return SoftmaxWithLoss()
 
 
-@dataclass(frozen=True, kw_only=True)
-class Deep2dNetConfig(LayerConfig):
-    """Config of the 2D Deep Neural Network.
-
-    diagram:
-        input -- hidden_layers -- output
-    """
-
-    input_dim: tuple[int, int, int]
-    """The dimensions of the data, not including the batch size."""
-
-    hidden_layer_configs: tuple[LayerConfig, ...]
-    """The configurations of the hidden layers in order.
-
-    If we provide the loss function with the last layer for the trainer
-    independently, we do not need to include the last layer in this list.
-    """
-
-    load_params: str | None = None
-    """The file to load the parameters for the network."""
-
-    def create(
-        self, parameters: dict[str, NDArray[np.floating]] | None = None
-    ) -> Layer:
-        if self.load_params is not None and parameters is not None:
-            raise ValueError(
-                "The parameters should not be provided when "
-                "loading the parameters."
-            )
-
-        params = parameters
-        if self.load_params is not None:
-            with open(self.load_params, "rb") as f:
-                params = pickle.load(f)
-
-        layers = create_layers(self.hidden_layer_configs, params)
-        return Deep2dNet(tuple(layers))
-
-
 def create_layers(
     layer_configs: Sequence[LayerConfig],
     parameters: dict[str, NDArray[np.floating]] | None = None,
@@ -384,3 +431,20 @@ def assert_keys_if_params_provided(
         raise ValueError(
             f"Parameters for {', '.join(missing_keys)} have to be provided."
         )
+
+
+def decide_params(
+    load_params: str | None,
+    outside_params: dict[str, NDArray[np.floating]] | None,
+) -> dict[str, NDArray[np.floating]] | None:
+    if (load_params is not None) and (outside_params is not None):
+        raise ValueError(
+            "The parameters should not be provided when loading the parameters."
+        )
+
+    params = outside_params
+    if load_params is not None:
+        with open(load_params, "rb") as f:
+            params = pickle.load(f)
+
+    return params

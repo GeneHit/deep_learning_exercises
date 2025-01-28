@@ -1,10 +1,8 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from common.base import NueralNet
 
-
-class TwoLayerNN(NueralNet):
+class TwoLayerNN:
     """A two-layer neural network.
 
     Graphical representation of the network:
@@ -117,7 +115,7 @@ class TwoLayerNN(NueralNet):
 
 
 def training(
-    network: NueralNet,
+    network: TwoLayerNN,
     x_train: NDArray[np.floating],
     t_train: NDArray[np.floating],
     learning_rate: float,

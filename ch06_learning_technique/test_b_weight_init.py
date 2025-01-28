@@ -1,8 +1,10 @@
 import numpy as np
 import pytest
 
-from ch06_learning_technique.b_weight_init import generate_init_weight
-from common.initialization import NN_FLOAT_TYPE
+from ch06_learning_technique.b_weight_init import (
+    NN_FLOAT_TYPE,
+    generate_init_weight,
+)
 
 
 @pytest.mark.parametrize(

@@ -1,10 +1,10 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from common.base import NueralNet
+from ch04_network_learning.d_learning_implementation import TwoLayerNN
 
 
-class TwoLayerNN(NueralNet):
+class BackPropTwoLayerNN(TwoLayerNN):
     """A 2-layer neunal network.
 
     Graphical representation of the network:

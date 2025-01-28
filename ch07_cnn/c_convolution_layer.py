@@ -160,34 +160,24 @@ class Conv2d(Layer):
 
         dout: Gradient of loss w.r.t. output (N, F_n, H_out, W_out)
 
-        1. Gradient w.r.t. Bias (db):
-            - Input: dout (N, F_n, H_out, W_out)
-            - Process: Sum across batch (N), height (H_out), and width (W_out)
-            - Output: db (F_n,)
+        forward pass:
+            1) x -> im2col -> shaped_x
+                (N, C, H, W) -> (N * H_out * W_out, C * FH * FW)
+            2) shapedx * shaped_w + b  -> output -> reshaped to out
+                (N * H_out * W_out, C * FH * FW) * (Fn, C * FH * FW)' + (1, Fn)
+                -> (N * H_out * W_out, Fn) -> (N, F_n, H_out, W_out)
 
-        2. Gradient w.r.t. Weights (dW):
-            - Input:
-                - im2col result: (N * H_out * W_out, C * FH * FW)
-                - dout reshaped to: (N * H_out * W_out, F_n)
-            - Process:
-                - Matrix multiplication: im2col.T * reshaped_dout
-            - Output: dW (F_n, C * FH * FW)
-            - Reshape to: dW (F_n, C, FH, FW)
-
-        3. Gradient w.r.t. Input (dX):
-            - Input:
-                - dout reshaped to: (N * H_out * W_out, F_n)
-                - Filter weights reshaped to: (F_n, C * FH * FW)
-            - Process:
-                - Matrix multiplication: reshaped_dout * reshaped_weights
-                - Intermediate result: (N * H_out * W_out, C * FH * FW)
-                - Apply col2im to reshape back to input dimensions
-            - Output: dX (N, C, H, W)
-
-        Summary of Dimensions:
-            - db: (F_n,)
-            - dW: (F_n, C, FH, FW)
-            - dX: (N, C, H, W)
+        backward pass:
+            1) dout -> reshaped to output's shape -> d_output
+                (N, F_n, H_out, W_out) -> (N * H_out * W_out, F_n)
+            2) d_shaped_w = im2col.T * d_output
+                (C * FH * FW, N * H_out * W_out) * (N * H_out * W_out, F_n)
+                = (C * FH * FW, F_n)
+                ---> d_w = d_shaped_w.reshape(F_n, C, FH, FW)
+            3) d_b = sum(d_output) over row
+                (1, F_n) = sum((N, F_n, H_out, W_out)) over (N, H_out, W_out)
+            4) d_shaped_x = d_output * shaped_w.T
+                ---> d_x = col2im(d_shaped_x)
 
         Parameters:
             dout: NDArray[np.floating]
