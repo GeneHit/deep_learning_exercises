@@ -1,16 +1,31 @@
 import numpy as np
 from numpy.typing import NDArray
 
+NN_FLOAT_TYPE = np.float32
+
+
+def compute_fan_in_and_fan_out(
+    weight_shape: tuple[int, ...],
+) -> tuple[int, int]:
+    """Compute fan_in and fan_out based on the weight shape."""
+    match len(weight_shape):
+        case 2:  # Affine layer
+            fan_in, fan_out = weight_shape[0], weight_shape[1]
+        case 4:  # Convolution layer
+            fan_in = weight_shape[1] * weight_shape[2] * weight_shape[3]
+            fan_out = weight_shape[0] * weight_shape[2] * weight_shape[3]
+        case _:
+            raise ValueError("The weight shape must be 2D or 4D.")
+    return fan_in, fan_out
+
 
 def generate_init_weight(
-    layer_type: str,
     weight_shape: tuple[int, ...],
-    activation: str = "relu",
-    distribution: str = "normal",
+    initializer: str = "he_normal",
+    mode: str = "fan_in",
     stddev: float | None = None,
 ) -> NDArray[np.floating]:
-    """
-    Generate initialized weights for a given layer.
+    """Generate initialized weights.
 
     the current best practice:
 
@@ -19,33 +34,65 @@ def generate_init_weight(
                     ReLU                                He initialization
         sigmoid or tanh (S-shaped curve function)     Xavier initialization
 
-    He initialization:
-        Normal distribution with mean 0 and variance (
-            2/D_in or 2/(C_in * K_h * K_w)
-        )
-    Xavier initialization:
-        Normal distribution with mean 0 and variance (
-            2/(D_in + D_out) or 2/(C_in * K_h * K_w + F_n * K_h * K_w)
-        ). But, usually, it is variance 1/D_in or 1/(C_in * K_h * K_w).
+    Affine layer: 2D array, with shape (D_in, D_out).
+    Convolution layer: 4D array, with shape (F_n, C_in, K_h, K_w).
 
-    If requeiring a uniform distribution, have to multi 3 inside the variance.
+    -> fan_in = D_in or C_in * K_h * K_w
+    -> fan_out = D_out or F_n * K_h * K_w
+    scale = fan_in or fan_out or (fan_in + fan_out) / 2 (different modes)
+
+    Normal distribution with mean 0 and variance:
+        he: std = sqrt(2 / scale)
+        xavier: std = sqrt(1 / scale).
+    Uniform distribution:  sqrt(3) * above_std.
 
     Parameters:
-        layer_type : str
-            Type of layer ("conv" or "affine").
-        weight_shape : Tuple[int, ...])
-            Shape of the weight tensor.
-                - For Conv layers: (F_n, C_in, K_h, K_w)
-                - For Affine layers: (D_in, D_out)
-        activation : str
-            Activation function type ("relu", "sigmoid", "tanh", or "softmax").
-        distribution : str
-            Distribution type for initialization ("normal" or "uniform").
+        weight_shape : Tuple[int, ...]
+            Shape of the weight tensor. only 2D or 4D.
+        initializer : str
+            The initializer for the weights of the layer.
+            Options:
+                - "he_normal": He normal initializer.
+                - "he_uniform": He uniform initializer.
+                - "xavier_normal": Xavier normal initializer.
+                - "xavier_uniform": Xavier uniform initializer.
+                - "normal": Normal distribution with weight_init_std.
+                - "uniform": Uniform distribution with weight_init_std.
+        mode : str
+            The mode for the initialization. It is used for the He/Xavier
+            initialization. Options: "fan_in", "fan_out", fan_out or fan_avg.
         stddev : float, optional
-            Standard deviation for normal distribution. If provided,
-            it will use this value instead use the He/Xavier method.
+            Standard deviation for normal/uniform distribution. It is only used
+            when the initializer is "normal" or "uniform".
 
     Returns:
         np.ndarray: Initialized weight tensor.
+    """
+    raise NotImplementedError
+
+
+def generate_init_bias(
+    bias_shape: tuple[int, ...],
+    initializer: str = "zeros",
+    stddev: float | None = None,
+) -> NDArray[np.floating]:
+    """Generate initialized biases.
+
+    Parameters:
+        bias_shape : Tuple[int, ...]
+            Shape of the bias tensor.
+        initializer : str
+            The initializer for the biases of the layer.
+            Options:
+                - "zeros": Initialize all biases to 0.
+                - "ones": Initialize all biases to 1.
+                - "normal": Normal distribution with weight_init_std.
+                - "uniform": Uniform distribution with weight_init_std.
+        stddev : float, optional
+            Standard deviation for normal/uniform distribution. It is only used
+            when the initializer is "normal" or "uniform".
+
+    Returns:
+        np.ndarray: Initialized bias tensor.
     """
     raise NotImplementedError

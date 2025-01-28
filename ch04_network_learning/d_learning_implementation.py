@@ -1,10 +1,8 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from common.base import NueralNet
 
-
-class TwoLayerNN(NueralNet):
+class TwoLayerNN:
     """A two-layer neural network.
 
     Graphical representation of the network:
@@ -12,7 +10,7 @@ class TwoLayerNN(NueralNet):
         Input Layer      Hidden Layer 1      Output Layer
             x  --------> (signoid ) -------->(softmax)->y
 
-    This network is fully connected and feedforward.
+    This network is fully connected and feedforward, which means using 2D array.
     """
 
     def __init__(
@@ -117,7 +115,7 @@ class TwoLayerNN(NueralNet):
 
 
 def training(
-    network: NueralNet,
+    network: TwoLayerNN,
     x_train: NDArray[np.floating],
     t_train: NDArray[np.floating],
     learning_rate: float,

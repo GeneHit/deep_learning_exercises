@@ -3,9 +3,16 @@ import pytest
 from numpy.typing import NDArray
 
 from ch06_learning_technique.a_optimization import SGD
-from ch06_learning_technique.d_reg_weight_decay import MultiLinearNN
-from ch06_learning_technique.d_trainer import NormalTraier
+from ch06_learning_technique.d_reg_weight_decay import LayerTraier
 from ch06_learning_technique.test_d_overfit_exp import _plot_accuracy
+from common.evaluation import single_label_accuracy
+from common.layer_config import (
+    AffineConfig,
+    BatchNorm1dConfig,
+    ReLUConfig,
+    SequentialConfig,
+    SoftmaxWithLossConfig,
+)
 from dataset.mnist import load_mnist
 
 EPOCHS = 20
@@ -26,7 +33,9 @@ def mnist_data() -> tuple[
         tuple: Tuple containing training and test data.
     """
     # Load MNIST data, returning a 60000x784 array for x and a nx10 array for t
-    ((x_train, t_train), (x_test, t_test)) = load_mnist(normalize=True)
+    ((x_train, t_train), (x_test, t_test)) = load_mnist(
+        normalize=True, flatten=True
+    )
     # Use only 300 samples for testing the overfitting
     return (x_train[:1000], t_train[:1000]), (x_test, t_test)
 
@@ -37,7 +46,7 @@ def overfit_nn(
         tuple[NDArray[np.floating], NDArray[np.floating]],
         tuple[NDArray[np.floating], NDArray[np.floating]],
     ],
-) -> NormalTraier:
+) -> LayerTraier:
     """Train a overfitting NN without batch normalization and dropout.
 
     This is used for comparing the overfitting with weight decay and dropout.
@@ -46,14 +55,26 @@ def overfit_nn(
     ((x_train, t_train), (x_test, t_test)) = mnist_data
 
     # Initialization
-    network = MultiLinearNN(
-        input_size=784,
-        hidden_sizes=HIDDEN_SIZES,
-        output_size=10,
+    config = SequentialConfig(
+        # input_dim=(784,),
+        hidden_layer_configs=(
+            AffineConfig(in_size=784, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=10, initializer="he_normal"),
+        ),
     )
+    network = config.create()
     optimizer = SGD(lr=0.01)
-    trainer = NormalTraier(
+    trainer = LayerTraier(
         network=network,
+        loss=SoftmaxWithLossConfig().create(),
+        evaluation_fn=single_label_accuracy,
         optimizer=optimizer,
         x_train=x_train,
         t_train=t_train,
@@ -61,6 +82,7 @@ def overfit_nn(
         t_test=t_test,
         epochs=EPOCHS,
         mini_batch_size=100,
+        evaluate_test_data=False,
     )
 
     # Train the network
@@ -70,7 +92,7 @@ def overfit_nn(
 
 
 def test_batch_normalization(
-    overfit_nn: NormalTraier,
+    overfit_nn: LayerTraier,
     mnist_data: tuple[
         tuple[NDArray[np.floating], NDArray[np.floating]],
         tuple[NDArray[np.floating], NDArray[np.floating]],
@@ -81,15 +103,31 @@ def test_batch_normalization(
     ((x_train, t_train), (x_test, t_test)) = mnist_data
 
     # Initialization
-    network = MultiLinearNN(
-        input_size=784,
-        hidden_sizes=HIDDEN_SIZES,
-        output_size=10,
-        use_batchnorm=True,
+    config = SequentialConfig(
+        # input_dim=(784,),
+        hidden_layer_configs=(
+            AffineConfig(in_size=784, out_size=100, initializer="he_normal"),
+            BatchNorm1dConfig(num_feature=100),
+            # use inplace to save memory avoiding to create a new array
+            ReLUConfig(inplace=True),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            BatchNorm1dConfig(num_feature=100),
+            ReLUConfig(inplace=True),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            BatchNorm1dConfig(num_feature=100),
+            ReLUConfig(inplace=True),
+            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            BatchNorm1dConfig(num_feature=100),
+            ReLUConfig(inplace=True),
+            AffineConfig(in_size=100, out_size=10, initializer="he_normal"),
+        ),
     )
+    network = config.create()
     optimizer = SGD(lr=0.01)
-    trainer = NormalTraier(
+    trainer = LayerTraier(
         network=network,
+        loss=SoftmaxWithLossConfig().create(),
+        evaluation_fn=single_label_accuracy,
         optimizer=optimizer,
         x_train=x_train,
         t_train=t_train,
@@ -97,6 +135,7 @@ def test_batch_normalization(
         t_test=t_test,
         epochs=EPOCHS,
         mini_batch_size=100,
+        evaluate_test_data=False,
     )
 
     # Train the network

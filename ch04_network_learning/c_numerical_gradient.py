@@ -61,6 +61,7 @@ class GradientWith1LayerNN:
 
     The graph of the simple neural network is as follows:
         x -> [W] -> [softmax] -> y
+    where x is 2D array.
 
     We use a simple neural network to demonstrate the gradient calculation.
     """

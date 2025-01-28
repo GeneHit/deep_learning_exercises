@@ -27,7 +27,7 @@ def _update_params(
     # Update parameters using SGD
     pos = {"key": init_pos}
     for _ in range(step):
-        optimizer.update(params=pos, grads={"key": df_for_test(init_pos)})
+        optimizer.one_step(params=pos, grads={"key": df_for_test(init_pos)})
     return pos["key"]
 
 

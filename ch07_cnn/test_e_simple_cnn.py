@@ -1,15 +1,20 @@
 from ch06_learning_technique.a_optimization import Adam
-from ch06_learning_technique.d_trainer import NormalTraier
-from ch07_cnn.e_simple_cnn import (
-    ConvConfig,
-    PoolConfig,
-    SimpleCNN,
-    SimpleCNNConfig,
+from ch06_learning_technique.d_reg_weight_decay import LayerTraier
+from common.evaluation import single_label_accuracy
+from common.layer_config import (
+    AffineConfig,
+    Conv2dConfig,
+    FlattenConfig,
+    MaxPool2dConfig,
+    ReLUConfig,
+    SequentialConfig,
+    SoftmaxWithLossConfig,
 )
 from dataset.mnist import load_mnist
 
 
 def test_simple_cnn() -> None:
+    # returning a nx1x28x28 array for x and a nx10 array for t
     (x_train, t_train), (x_test, t_test) = load_mnist(flatten=False)
     # Reduce the dataset size to speed up the test, so that run the test for
     # verifying the correctness of the code.
@@ -18,19 +23,35 @@ def test_simple_cnn() -> None:
 
     epochs = 20
 
-    cnn_params = SimpleCNNConfig(
-        input_dim=(1, 28, 28),
-        conv_params=ConvConfig(
-            filter_num=30, filter_h=5, filter_w=5, stride=1, pad=0
+    # Initializing the network:
+    #   (conv - relu - max_pool) - (flatten - affine - relu) - affine - softmax
+    config = SequentialConfig(
+        # input_dim=(1, 28, 28),
+        hidden_layer_configs=(
+            Conv2dConfig(
+                in_channels=1,
+                out_channels=30,
+                kernel_size=(5, 5),
+                stride=1,
+                pad=0,
+                param_suffix="1",
+            ),
+            ReLUConfig(),
+            MaxPool2dConfig(kernel_size=(2, 2), stride=2),
+            FlattenConfig(),
+            AffineConfig(
+                in_size=30 * 12 * 12, out_size=100, initializer="he_normal"
+            ),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=10, initializer="he_normal"),
         ),
-        pooling_params=PoolConfig(pool_h=2, pool_w=2, stride=2, pad=0),
-        hidden_size=100,
-        output_size=10,
     )
-    nn = SimpleCNN(cnn_params)
+    network = config.create()
     optimizer = Adam(lr=0.01)
-    trainer = NormalTraier(
-        network=nn,
+    trainer = LayerTraier(
+        network=network,
+        loss=SoftmaxWithLossConfig().create(),
+        evaluation_fn=single_label_accuracy,
         optimizer=optimizer,
         x_train=x_train,
         t_train=t_train,
@@ -38,7 +59,7 @@ def test_simple_cnn() -> None:
         t_test=t_test,
         epochs=epochs,
         mini_batch_size=100,
-        evaluated_sample_per_epoch=1000,
+        evaluate_test_data=False,
     )
 
     trainer.train()

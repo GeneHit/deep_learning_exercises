@@ -13,10 +13,11 @@ class Layer(abc.ABC):
         """Return the parameters of the network.
 
         Note: this return a reference, the dict and the NDArray are mutable.
-        It can be used for updating the parameters outside.
+        It can be used for updating the parameters by the outside
+        inplace operation +=, -=.
         """
 
-    def train_flag(self, flag: bool) -> None:
+    def train(self, flag: bool) -> None:
         """Set the training flag of the layer.
 
         During training, some layer may need to change their behavior, for
@@ -28,6 +29,25 @@ class Layer(abc.ABC):
                 if neccesary.
         """
         pass
+
+    def forward_to_loss(
+        self,
+        x: NDArray[np.floating],
+        t: NDArray[np.floating],
+    ) -> float:
+        """Forward pass of the layer.
+
+        BE CAREFUL: This method is used for the layers that are used in the
+        loss layer, like the softmax layer.
+
+        Parameters:
+            x (NDArray[np.floating]): Input data.
+            t (NDArray[np.floating]): Target output.
+
+        Returns:
+            float: Loss value.
+        """
+        raise NotImplementedError
 
     @abc.abstractmethod
     def forward(self, x: NDArray[np.floating]) -> NDArray[np.floating]:
@@ -63,83 +83,20 @@ class Layer(abc.ABC):
 class LayerConfig(abc.ABC):
     """Base class for the configuration of the layers."""
 
-    # @abc.abstractmethod
-    # def create(self) -> Layer:
-    #     """Create the layer based on the configuration."""
-    #     raise NotImplementedError
-
-
-class NueralNet(abc.ABC):
     @abc.abstractmethod
-    def named_parameters(self) -> dict[str, NDArray[np.floating]]:
-        """Return the parameters of the network.
+    def create(
+        self, parameters: dict[str, NDArray[np.floating]] | None = None
+    ) -> Layer:
+        """Create the layer based on the configuration.
 
-        Note: this return a reference, the dict and the NDArray are mutable.
-        It can be used for updating the parameters outside.
-        """
-
-    @abc.abstractmethod
-    def predict(
-        self, x: NDArray[np.floating], train_flag: bool = False
-    ) -> NDArray[np.floating]:
-        """Predict the output for the given input.
+        Every special difinited layer should have a corresponding config.
 
         Parameters:
-            x (NDArray[np.floating]): Input data.
-            train_flag (bool): Training flag.
-
-        Returns:
-            NDArray[np.floating]: Predicted output.
-        """
-
-    @abc.abstractmethod
-    def loss(
-        self,
-        x: NDArray[np.floating],
-        t: NDArray[np.floating],
-        train_flag: bool = False,
-    ) -> float:
-        """Calculate the loss for the given input and target output.
-
-        Parameters:
-            x (NDArray[np.floating]): Input data.
-            t (NDArray[np.floating]): Target output.
-            train_flag (bool): Training flag.
-
-        Returns:
-            float: Loss value.
-        """
-
-    @abc.abstractmethod
-    def accuracy(
-        self,
-        x: NDArray[np.floating],
-        t: NDArray[np.floating],
-    ) -> float:
-        """Calculate the accuracy for the given input and target output.
-
-        Parameters:
-            x (NDArray[np.floating]): Input data.
-            t (NDArray[np.floating]): Target output.
-
-        Returns:
-            float: Accuracy value.
-        """
-
-    @abc.abstractmethod
-    def gradient(
-        self,
-        x: NDArray[np.floating],
-        t: NDArray[np.floating],
-    ) -> dict[str, NDArray[np.floating]]:
-        """Calculate the gradient of the parameters.
-
-        Parameters:
-            x (NDArray[np.floating]): Input data.
-            t (NDArray[np.floating]): Target output.
-
-        Returns:
-            dict[str, NDArray[np.floating]]: Gradients of the weights and biases.
+            parameters : dict[str, NDArray[np.floating]]
+                Dictionary of parameters for the layer. If provided, it will
+                be used for the initialization of the layer, instead of using
+                the provided configured initializer. This is useful for loading
+                the trained parameters.
         """
 
 
@@ -147,12 +104,14 @@ class Optimizer(abc.ABC):
     """Base class for all optimizers."""
 
     @abc.abstractmethod
-    def update(
+    def one_step(
         self,
         params: dict[str, NDArray[np.floating]],
         grads: dict[str, NDArray[np.floating]],
     ) -> None:
-        """Update the parameters using the gradients.
+        """Update the parameters using the gradients once.
+
+        Have to use the inplace operation to update the parameters.
 
         Parameters:
             params : dict[str, NDArray[np.floating]]
@@ -163,52 +122,7 @@ class Optimizer(abc.ABC):
 
 
 class Trainer(abc.ABC):
-    """A class for training a neural network."""
-
-    def __init__(
-        self,
-        network: NueralNet,
-        optimizer: Optimizer,
-        x_train: NDArray[np.floating],
-        t_train: NDArray[np.floating],
-        x_test: NDArray[np.floating],
-        t_test: NDArray[np.floating],
-        epochs: int,
-        mini_batch_size: int,
-        evaluate_train_data: bool = True,
-        evaluate_test_data: bool = True,
-        evaluated_sample_per_epoch: int | None = None,
-        verbose: bool = False,
-    ) -> None:
-        """Initialize the trainer.
-
-        Parameters:
-            network : NueralNet
-                The neural network to be trained.
-            optimizer : Optimizer
-                The optimizer to be used for training.
-            x_train : NDArray[np.floating]
-                Training data.
-            t_train : NDArray[np.floating]
-                Training labels.
-            x_test : NDArray[np.floating]
-                Test data.
-            t_test : NDArray[np.floating]
-                Test labels.
-            epochs : int
-                Number of epochs.
-            mini_batch_size : int
-                Mini-batch size.
-            evaluate_train_data : bool
-                Evaluate the training data during training, by default True.
-            evaluate_test_data : bool
-                Evaluate the test data during training, by default True.
-            evaluated_sample_per_epoch : int, optional
-                Number of test samples for evaluation per epoch, by default None.
-            verbose : bool
-                Print the training logging, by default False.
-        """
-        raise NotImplementedError("have to implement the __init__ method.")
+    """A base for the trainer of the neural network."""
 
     @abc.abstractmethod
     def train(self) -> None:
@@ -221,20 +135,21 @@ class Trainer(abc.ABC):
                 reduce the computation cost, if we just care aboud the training
                 accuracy or the final accuracy.
         """
-        raise NotImplementedError("The train method is not implemented yet.")
 
     @abc.abstractmethod
-    def get_final_accuracy(self) -> float:
+    def get_final_accuracy(self) -> tuple[float, float]:
         """Get the final accuracy of the network after training.
 
         This method may avoid one more accuracy calculation outside.
-        """
-        raise NotImplementedError
 
+        Returns:
+            tuple[float, float]: Training and test accuracy.
+        """
+
+    @abc.abstractmethod
     def get_history_accuracy(self) -> tuple[list[float], list[float]]:
         """Get the history of the accuracy during training.
 
         Returns:
             tuple[list[float], list[float]]: Training and test accuracy every epoch.
         """
-        raise NotImplementedError
