@@ -10,6 +10,7 @@ from common.layer_config import (
     SequentialConfig,
     SoftmaxWithLossConfig,
 )
+from common.utils import assert_layer_parameter_type
 from dataset.mnist import load_mnist
 
 
@@ -64,6 +65,7 @@ def test_simple_cnn() -> None:
 
     trainer.train()
 
+    assert_layer_parameter_type(network)
     train_acc_list, test_acc_list = trainer.get_history_accuracy()
     assert train_acc_list[-1] >= 0.98
     assert test_acc_list[-1] >= 0.95

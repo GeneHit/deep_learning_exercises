@@ -4,6 +4,7 @@ from numpy.typing import NDArray
 
 from ch06_learning_technique.a_optimization import SGD
 from ch06_learning_technique.d_reg_weight_decay import LayerTraier
+from common.default_type_array import np_array
 from common.evaluation import single_label_accuracy
 from common.layer_config import (
     AffineConfig,
@@ -13,6 +14,7 @@ from common.layer_config import (
     SequentialConfig,
     SoftmaxWithLossConfig,
 )
+from common.utils import assert_layer_parameter_type
 from dataset.mnist import load_mnist
 
 # since the accuracy is not always the same and just used for verifying the
@@ -88,8 +90,9 @@ def test_multi_layer_nn(
     # Train the network
     trainer.train()
 
+    assert_layer_parameter_type(network)
     # accuracy should be greater than a verifying threshold
-    assert any(np.array(trainer.get_final_accuracy()) > ACCURACY_THRESHOLD)
+    assert any(np_array(trainer.get_final_accuracy()) > ACCURACY_THRESHOLD)
 
 
 def test_batch_normalization_by_multi_layer_nn(
@@ -141,8 +144,9 @@ def test_batch_normalization_by_multi_layer_nn(
     # Train the network
     trainer.train()
 
+    assert_layer_parameter_type(network)
     # accuracy should be greater than a verifying threshold
-    assert any(np.array(trainer.get_final_accuracy()) > ACCURACY_THRESHOLD)
+    assert any(np_array(trainer.get_final_accuracy()) > ACCURACY_THRESHOLD)
 
 
 def test_dropout_by_multi_layer_nn(
@@ -193,5 +197,6 @@ def test_dropout_by_multi_layer_nn(
     # Train the network
     trainer.train()
 
+    assert_layer_parameter_type(network)
     # accuracy should be greater than a verifying threshold
-    assert any(np.array(trainer.get_final_accuracy()) > ACCURACY_THRESHOLD)
+    assert any(np_array(trainer.get_final_accuracy()) > ACCURACY_THRESHOLD)

@@ -118,7 +118,7 @@ def training(
     network: TwoLayerNN,
     x_train: NDArray[np.floating],
     t_train: NDArray[np.floating],
-    learning_rate: float,
+    learning_rate: np.floating,
     batch_size: int,
     epochs: int,
     verbose: bool = False,

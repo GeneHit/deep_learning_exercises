@@ -13,6 +13,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from common.base import Layer, Optimizer, Trainer
+from common.default_type_array import np_float
 
 WEIGHT_START_WITH = "W"
 
@@ -127,7 +128,9 @@ class LayerTraier(Trainer):
         self._t_test = t_test
         self._epochs = epochs
         self._mini_batch_size = mini_batch_size
-        self._weight_decay_lambda = weight_decay_lambda
+        self._weight_decay_lambda: np.floating | None = None
+        if weight_decay_lambda is not None:
+            self._weight_decay_lambda = np_float(weight_decay_lambda)
         self._evaluate_train_data = evaluate_train_data
         self._evaluate_test_data = evaluate_test_data
         self._evaluated_sample_per_epoch = evaluated_sample_per_epoch
@@ -248,8 +251,8 @@ class LayerTraier(Trainer):
         raise NotImplementedError
 
 
-def _weight_square_sum(params: dict[str, NDArray[np.floating]]) -> float:
-    weight_decay = 0.0
+def _weight_square_sum(params: dict[str, NDArray[np.floating]]) -> np.floating:
+    weight_decay = np_float(0)
     for key in params.keys():
         if key.startswith(WEIGHT_START_WITH):
             weight_decay += np.sum(params[key] ** 2)
@@ -260,7 +263,7 @@ def _weight_square_sum(params: dict[str, NDArray[np.floating]]) -> float:
 def _update_weight_decay_if_necessary(
     params_grad: dict[str, NDArray[np.floating]],
     params: dict[str, NDArray[np.floating]],
-    weight_decay_lambda: float | None,
+    weight_decay_lambda: np.floating | None,
 ) -> None:
     if weight_decay_lambda:
         for key in params_grad.keys():

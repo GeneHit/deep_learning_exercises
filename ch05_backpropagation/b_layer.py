@@ -2,6 +2,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from common.base import Layer
+from common.default_type_array import np_ones
 
 
 class ReLU(Layer):
@@ -156,7 +157,12 @@ class SoftmaxWithLoss(Layer):
         raise NotImplementedError("The method is not implemented yet.")
 
     def backward(
-        self, dout: NDArray[np.floating] = np.array([1.0])
+        self, dout: NDArray[np.floating] = np_ones(shape=(1,))
     ) -> NDArray[np.floating]:
-        """Backward pass of the layer."""
+        """Backward pass of the layer.
+
+        Parameters:
+            dout : NDArray[np.floating]
+                Gradient of the loss. Usually, it is 1.0 = dL/dL.
+        """
         raise NotImplementedError("The backward method is not implemented yet.")

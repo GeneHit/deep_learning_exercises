@@ -2,6 +2,8 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.ndimage import rotate, shift
 
+from common.default_type_array import get_default_type
+
 
 def random_rotation(
     image: NDArray[np.floating], max_angle: int = 15
@@ -9,7 +11,8 @@ def random_rotation(
     """Randomly rotate the image within a specified angle range."""
     angle = np.random.uniform(-max_angle, max_angle)
     rotated_image: NDArray[np.floating] = np.asarray(
-        rotate(image, angle, reshape=False, mode="constant", cval=0.0)
+        rotate(image, angle, reshape=False, mode="constant", cval=0.0),
+        dtype=get_default_type(),
     )
     return rotated_image
 
@@ -21,7 +24,8 @@ def random_shift(
     shift_x = np.random.uniform(-max_shift, max_shift)
     shift_y = np.random.uniform(-max_shift, max_shift)
     shift_image: NDArray[np.floating] = np.asarray(
-        shift(image, [shift_x, shift_y], mode="constant", cval=0.0)
+        shift(image, [shift_x, shift_y], mode="constant", cval=0.0),
+        dtype=get_default_type(),
     )
     return shift_image
 
