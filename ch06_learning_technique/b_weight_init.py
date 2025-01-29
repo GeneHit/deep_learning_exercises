@@ -1,7 +1,9 @@
 import numpy as np
 from numpy.typing import NDArray
 
-NN_FLOAT_TYPE = np.float32
+from common.default_type_array import get_default_type
+
+D_TYPE = get_default_type()
 
 
 def compute_fan_in_and_fan_out(
