@@ -1,6 +1,6 @@
 # Deep Learning from Scratch
 
-This repository contains the coding practice for the book [*Deep Learning from Scratch*](https://www.ituring.com.cn/book/1921). The main focus of this repository is to use unit tests extensively for the methods implemented chapter by chapter. This structure allows the repository to serve as a self-paced coding exercise for the book.
+This repository contains the coding practice for the book [*Deep Learning from Scratch*](https://www.ituring.com.cn/book/1921). The main focus of this repository is to use unit tests extensively for the methods chapter by chapter. This structure allows the repository to serve as a self-paced coding exercise for the book.
 
 ## Running Automated Tests
 
@@ -10,6 +10,7 @@ To run all the tests in the repository, use the following command:
 pytest -s .
 ```
 
+**Notice: so many test is about trainning a neural network, which may costs a long time.**
 Initially, all tests will fail. As you implement more methods, more tests should pass. This approach ensures that your progress is aligned with the book's content.
 
 To run a specific test, you can use the `-k` option to target the desired test. For example:
@@ -23,7 +24,7 @@ This command runs the `test_AND` test in the `test_perceptron.py` file located i
 ## Code Quality and Checking
 
 To maintain high code quality and consistency, this repository integrates several tools with pre-commit hooks.
-**You can ignore this part if you don't do it.**
+**You can ignore this part if you don't want to do it.**
 
 ### Setting Up Pre-Commit Hooks
 
