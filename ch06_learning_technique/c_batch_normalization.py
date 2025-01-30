@@ -2,6 +2,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from common.base import Layer
+from common.default_type_array import np_float
 
 
 class BatchNorm1d(Layer):
@@ -47,8 +48,8 @@ class BatchNorm1d(Layer):
         # num_features = gamma[1].size
         assert gamma[1].ndim == 1 and beta[1].ndim == 1
         self._params = {gamma[0]: gamma[1], beta[0]: beta[1]}
-        self._eps = eps
-        self._momentum = momentum
+        self._eps = np_float(eps)
+        self._momentum = np_float(momentum)
         self._affine = affine
         self._track_running_stats = track_running_stats
 
@@ -111,8 +112,8 @@ class BatchNorm2d(Layer):
         # num_features = gamma[1].size
         assert gamma[1].ndim == 1 and beta[1].ndim == 1
         self._params = {gamma[0]: gamma[1], beta[0]: beta[1]}
-        self._eps = eps
-        self._momentum = momentum
+        self._eps = np_float(eps)
+        self._momentum = np_float(momentum)
         self._affine = affine
         self._track_running_stats = track_running_stats
 

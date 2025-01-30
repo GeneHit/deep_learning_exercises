@@ -9,16 +9,17 @@ from ch06_learning_technique.a_optimization import (
     Momentum,
 )
 from common.base import Optimizer
+from common.default_type_array import np_array, np_float
 
 
 def f(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:
-    return x**2 / 20.0 + y**2
+    return x**2 / np_float(20.0) + y**2
 
 
 def df(
     x: NDArray[np.floating], y: NDArray[np.floating]
 ) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
-    return x / 10.0, 2 * y
+    return x / np_float(10.0), 2 * y
 
 
 def process_one_optimizer(
@@ -42,8 +43,8 @@ def process_one_optimizer(
 
     grads = {}
     pos: dict[str, NDArray[np.floating]] = {
-        "x": np.array([init_pos[0]]),
-        "y": np.array([init_pos[1]]),
+        "x": np_array([init_pos[0]]),
+        "y": np_array([init_pos[1]]),
     }
     for _ in range(step):
         x_history.append(pos["x"][0])

@@ -3,6 +3,7 @@ import pytest
 from numpy.typing import NDArray
 
 from ch07_cnn.d_pooling_layer import AvgPool2d, Flatten, MaxPool2d
+from common.default_type_array import np_array
 
 
 class TestMaxPool2d:
@@ -16,15 +17,15 @@ class TestMaxPool2d:
                 (2, 2),
                 2,
                 0,
-                np.array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
-                np.array([[[[5, 6], [8, 9]]]]),  # expected_output
+                np_array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
+                np_array([[[[5, 6], [8, 9]]]]),  # expected_output
             ),
             # Example 2: Single channel, larger stride
             (
                 (2, 2),
                 3,
                 0,
-                np.array(
+                np_array(
                     [
                         [
                             [
@@ -36,7 +37,7 @@ class TestMaxPool2d:
                         ]
                     ]
                 ),
-                np.array([[[[6, 8], [14, 16]]]]),
+                np_array([[[[6, 8], [14, 16]]]]),
             ),
         ],
     )
@@ -61,18 +62,18 @@ class TestMaxPool2d:
                 (2, 2),
                 2,
                 0,
-                np.array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
-                np.array([[[[1, 1], [1, 1]]]]),  # dout
-                np.array([[[[0, 0, 0], [0, 1, 1], [0, 1, 1]]]]),  # expected_dx
+                np_array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
+                np_array([[[[1, 1], [1, 1]]]]),  # dout
+                np_array([[[[0, 0, 0], [0, 1, 1], [0, 1, 1]]]]),  # expected_dx
             ),
             # Example 2: Backpropagation for a larger input
             (
                 (2, 2),
                 2,
                 0,
-                np.array([[[[1, 3, 1], [4, 2, 6], [7, 5, 9]]]]),
-                np.array([[[[2, 3], [4, 5]]]]),
-                np.array([[[[0, 0, 0], [2, 0, 3], [4, 0, 5]]]]),
+                np_array([[[[1, 3, 1], [4, 2, 6], [7, 5, 9]]]]),
+                np_array([[[[2, 3], [4, 5]]]]),
+                np_array([[[[0, 0, 0], [2, 0, 3], [4, 0, 5]]]]),
             ),
         ],
     )
@@ -104,15 +105,15 @@ class TestAvgPool2d:
                 (2, 2),
                 2,
                 0,
-                np.array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
-                np.array([[[[3, 4.5], [7.5, 9]]]]),  # expected_output
+                np_array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
+                np_array([[[[3, 4.5], [7.5, 9]]]]),  # expected_output
             ),
             # Example 2: Single channel, stride = 3
             (
                 (2, 2),
                 3,
                 0,
-                np.array(
+                np_array(
                     [
                         [
                             [
@@ -124,7 +125,7 @@ class TestAvgPool2d:
                         ]
                     ]
                 ),
-                np.array([[[[3.5, 5.5], [11.5, 13.5]]]]),
+                np_array([[[[3.5, 5.5], [11.5, 13.5]]]]),
             ),
         ],
     )
@@ -149,9 +150,9 @@ class TestAvgPool2d:
                 (2, 2),
                 2,
                 0,
-                np.array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
-                np.array([[[[1, 1], [1, 1]]]]),  # dout
-                np.array(
+                np_array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
+                np_array([[[[1, 1], [1, 1]]]]),  # dout
+                np_array(
                     [[[[0.25, 0.25, 0], [0.25, 0.25, 0], [0, 0, 0]]]]
                 ),  # expected_dx
             ),
@@ -160,9 +161,9 @@ class TestAvgPool2d:
                 (2, 2),
                 2,
                 0,
-                np.array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),
-                np.array([[[[2, 3], [4, 5]]]]),
-                np.array([[[[0.5, 0.5, 0], [0.5, 0.5, 0], [0, 0, 0]]]]),
+                np_array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),
+                np_array([[[[2, 3], [4, 5]]]]),
+                np_array([[[[0.5, 0.5, 0], [0.5, 0.5, 0], [0, 0, 0]]]]),
             ),
         ],
     )
@@ -191,13 +192,13 @@ class TestFlatten:
         [
             # Example 1: Single batch, single channel
             (
-                np.array([[[[1, 2], [3, 4]]]]),  # input_x
-                np.array([[1, 2, 3, 4]]),  # expected_output
+                np_array([[[[1, 2], [3, 4]]]]),  # input_x
+                np_array([[1, 2, 3, 4]]),  # expected_output
             ),
             # Example 2: Multiple batches, multiple channels
             (
-                np.array([[[[1, 2], [3, 4]]], [[[5, 6], [7, 8]]]]),  # input_x
-                np.array([[1, 2, 3, 4], [5, 6, 7, 8]]),  # expected_output
+                np_array([[[[1, 2], [3, 4]]], [[[5, 6], [7, 8]]]]),  # input_x
+                np_array([[1, 2, 3, 4], [5, 6, 7, 8]]),  # expected_output
             ),
         ],
     )
@@ -216,15 +217,15 @@ class TestFlatten:
         [
             # Example 1: Single batch, single channel
             (
-                np.array([[[[1, 2], [3, 4]]]]),  # input_x
-                np.array([[1, 2, 3, 4]]),  # dout
-                np.array([[[[1, 2], [3, 4]]]]),  # expected_dx
+                np_array([[[[1, 2], [3, 4]]]]),  # input_x
+                np_array([[1, 2, 3, 4]]),  # dout
+                np_array([[[[1, 2], [3, 4]]]]),  # expected_dx
             ),
             # Example 2: Multiple batches, multiple channels
             (
-                np.array([[[[1, 2], [3, 4]]], [[[5, 6], [7, 8]]]]),  # input_x
-                np.array([[1, 2, 3, 4], [5, 6, 7, 8]]),  # dout
-                np.array(
+                np_array([[[[1, 2], [3, 4]]], [[[5, 6], [7, 8]]]]),  # input_x
+                np_array([[1, 2, 3, 4], [5, 6, 7, 8]]),  # dout
+                np_array(
                     [[[[1, 2], [3, 4]]], [[[5, 6], [7, 8]]]]
                 ),  # expected_dx
             ),

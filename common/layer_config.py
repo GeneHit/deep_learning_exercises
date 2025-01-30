@@ -7,13 +7,15 @@ Each configuration class:
 Classes:
     AffineConfig: Configuration for the Affine layer.
     AvgPool2dConfig: Configuration for the 2D average pooling layer.
-    BatchNorm2dConfig: Configuration for the Batch Normalization layer.
+    BatchNorm1dConfig: Configuration for the BatchNorm1d layer.
+    BatchNorm2dConfig: Configuration for the BatchNorm2d layer.
     Conv2dConfig: Configuration for the Convolution layer.
-    Deep2dNetConfig: Configuration for the 2D Deep Neural Network.
-    Dropout2dConfig: Configuration for the Dropout layer.
+    DropoutConfig: Configuration for the Dropout layer.
+    Dropout2dConfig: Configuration for the Dropout2d layer.
     FlattenConfig: Configuration for the Flatten layer.
     MaxPool2dConfig: Configuration for the 2D max pooling layer.
-    ReLuConfig: Configuration for the ReLU layer.
+    ReLUConfig: Configuration for the ReLU layer.
+    SequentialConfig: Configuration for the Sequential layer.
     SigmoidConfig: Configuration for the Sigmoid layer.
     SoftmaxConfig: Configuration for the Softmax layer.
     SoftmaxWithLossConfig: Configuration for the Softmax with loss layer.

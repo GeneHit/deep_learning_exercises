@@ -2,6 +2,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from common.base import Optimizer
+from common.default_type_array import np_float
 
 
 class SGD(Optimizer):
@@ -16,7 +17,7 @@ class SGD(Optimizer):
         Parameters:
             lr (float): Learning rate.
         """
-        self._lr = lr
+        self._lr = np_float(lr)
 
     def one_step(
         self,
@@ -44,8 +45,8 @@ class Momentum(Optimizer):
             lr (float): Learning rate.
             momentum (float): Momentum factor.
         """
-        self._lr = lr
-        self._momentum = momentum
+        self._lr = np_float(lr)
+        self._momentum = np_float(momentum)
 
     def one_step(
         self,
@@ -72,7 +73,7 @@ class AdaGrad(Optimizer):
         Parameters:
             lr (float): Learning rate.
         """
-        self._lr = lr
+        self._lr = np_float(lr)
 
     def one_step(
         self,
@@ -100,8 +101,8 @@ class RMSProp(Optimizer):
             lr (float): Learning rate.
             decay_rate (float): Decay rate.
         """
-        self._lr = lr
-        self._decay_rate = decay_rate
+        self._lr = np_float(lr)
+        self._decay_rate = np_float(decay_rate)
 
     def one_step(
         self,
@@ -135,9 +136,9 @@ class Adam(Optimizer):
             beta1 (float): Exponential decay rate for the first moment.
             beta2 (float): Exponential decay rate for the second moment.
         """
-        self._lr = lr
-        self._beta1 = beta1
-        self._beta2 = beta2
+        self._lr = np_float(lr)
+        self._beta1 = np_float(beta1)
+        self._beta2 = np_float(beta2)
 
     def one_step(
         self,

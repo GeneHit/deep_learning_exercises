@@ -1,5 +1,6 @@
 from ch04_network_learning.d_learning_implementation import training
 from ch05_backpropagation.c_backprop_network import TwoLayerNN
+from common.default_type_array import np_float
 from dataset.mnist import load_mnist
 
 
@@ -15,7 +16,12 @@ def test_two_layer_nn() -> None:
     # Train the network (assuming a train method has existed)
     # The train method should return the latest training history losses
     training_losses = training(
-        network, x_train, t_train, batch_size=100, learning_rate=0.1, epochs=10
+        network,
+        x_train,
+        t_train,
+        batch_size=100,
+        learning_rate=np_float(0.1),
+        epochs=10,
     )
 
     # Get the accuracy using the network's accuracy method

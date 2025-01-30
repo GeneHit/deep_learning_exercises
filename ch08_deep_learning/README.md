@@ -50,9 +50,12 @@ while still maintaining model accuracy.
 
 For large models, mixed precision training is a mainstream
 approach, typically combining FP16 and FP32:
-- **Forward and Backward Propagation**: Use FP16 to accelerate computation and reduce memory usage.
-- **Weight Updates**: Maintain the main weights in FP32 to avoid cumulative errors caused by low precision.
-- **Gradient Scaling**: Scale up the gradients of the loss function to prevent underflow in FP16, then scale them back to the original value during updates.
+- **Forward and Backward Propagation**: Use FP16 to accelerate computation and
+reduce memory usage.
+- **Weight Updates**: Maintain the main weights in FP32 to avoid cumulative
+errors caused by low precision.
+- **Gradient Scaling**: Scale up the gradients of the loss function to prevent
+underflow in FP16, then scale them back to the original value during updates.
 
 ### Early Stopping
 Early stopping is a technique to prevent overfitting by monitoring the model's

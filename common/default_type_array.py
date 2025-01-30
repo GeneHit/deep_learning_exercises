@@ -1,4 +1,4 @@
-from typing import Sequence, TypeAlias
+from typing import TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -17,35 +17,45 @@ def set_default_type(float_type: TypeAlias) -> None:
     NN_FLOAT_TYPE = float_type
 
 
-def array(sequencia: Sequence[float]) -> NDArray[np.floating]:
+def np_array(mat) -> NDArray[np.floating]:  # type: ignore
     """Convert a list to a numpy array."""
-    return np.array(sequencia, dtype=NN_FLOAT_TYPE)
+    return np.array(mat, dtype=NN_FLOAT_TYPE)
 
 
-def zeros(shape: tuple[int, ...]) -> NDArray[np.floating]:
+def np_zeros(shape: tuple[int, ...]) -> NDArray[np.floating]:
     """Return a new array of given shape and type, filled with zeros."""
     return np.zeros(shape, dtype=NN_FLOAT_TYPE)
 
 
-def ones(shape: tuple[int, ...]) -> NDArray[np.floating]:
+def np_zore_like(a: NDArray[np.floating]) -> NDArray[np.floating]:
+    """Return an array of zeros with the same shape and type as a given array."""
+    return np.zeros_like(a, dtype=NN_FLOAT_TYPE)
+
+
+def np_ones(shape: tuple[int, ...]) -> NDArray[np.floating]:
     """Return a new array of given shape and type, filled with ones."""
     return np.ones(shape, dtype=NN_FLOAT_TYPE)
 
 
-def randn(shape: tuple[int, ...]) -> NDArray[np.floating]:
+def np_randn(shape: tuple[int, ...]) -> NDArray[np.floating]:
     """Return a sample (or samples) from the "standard normal" distribution."""
     return np.random.randn(*shape).astype(NN_FLOAT_TYPE)
 
 
-def normal(
+def np_normal(
     loc: float, scale: float, size: tuple[int, ...]
 ) -> NDArray[np.floating]:
     """Draw random samples from a normal (Gaussian) distribution."""
     return np.random.normal(loc, scale, size).astype(NN_FLOAT_TYPE)
 
 
-def uniform(
+def np_uniform(
     low: float, high: float, size: tuple[int, ...]
 ) -> NDArray[np.floating]:
     """Draw samples from a uniform distribution."""
     return np.random.uniform(low, high, size).astype(NN_FLOAT_TYPE)
+
+
+def np_float(value: float) -> NN_FLOAT_TYPE:
+    """Return a floating-point number."""
+    return NN_FLOAT_TYPE(value)

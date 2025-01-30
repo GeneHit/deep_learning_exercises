@@ -7,6 +7,8 @@ import urllib.request
 
 import numpy as np
 
+from common.default_type_array import get_default_type
+
 # url_base = 'http://yann.lecun.com/exdb/mnist/'
 url_base = "https://ossci-datasets.s3.amazonaws.com/mnist/"  # mirror site
 
@@ -20,10 +22,12 @@ key_file = {
 dataset_dir = os.path.dirname(os.path.abspath(__file__))
 save_file = dataset_dir + "/mnist.pkl"
 
-train_num = 60000
-test_num = 10000
-img_dim = (1, 28, 28)
+# train_num = 60000
+# test_num = 10000
+# img_dim = (1, 28, 28)
 img_size = 784
+# use the lowest precision to save memory and upcast to net's default float type
+DEFAULT_INT_TYPE = np.uint8
 
 
 def _download(file_name):
@@ -53,7 +57,7 @@ def _load_label(file_name):
 
     print("Converting " + file_name + " to NumPy Array ...")
     with gzip.open(file_path, "rb") as f:
-        labels = np.frombuffer(f.read(), np.uint8, offset=8)
+        labels = np.frombuffer(f.read(), DEFAULT_INT_TYPE, offset=8)
     print("Done")
 
     return labels
@@ -64,7 +68,7 @@ def _load_img(file_name):
 
     print("Converting " + file_name + " to NumPy Array ...")
     with gzip.open(file_path, "rb") as f:
-        data = np.frombuffer(f.read(), np.uint8, offset=16)
+        data = np.frombuffer(f.read(), DEFAULT_INT_TYPE, offset=16)
     data = data.reshape(-1, img_size)
     print("Done")
 
@@ -124,7 +128,7 @@ def load_mnist(
 
     if normalize:
         for key in ("train_img", "test_img"):
-            dataset[key] = dataset[key].astype(np.float32)
+            dataset[key] = dataset[key].astype(get_default_type())
             dataset[key] /= 255.0
 
     if one_hot_label:

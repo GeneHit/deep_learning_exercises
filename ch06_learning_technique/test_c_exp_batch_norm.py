@@ -13,6 +13,7 @@ from common.layer_config import (
     SequentialConfig,
     SoftmaxWithLossConfig,
 )
+from common.utils import assert_layer_parameter_type
 from dataset.mnist import load_mnist
 
 EPOCHS = 20
@@ -88,6 +89,8 @@ def overfit_nn(
     # Train the network
     trainer.train()
 
+    assert_layer_parameter_type(network)
+
     return trainer
 
 
@@ -140,6 +143,8 @@ def test_batch_normalization(
 
     # Train the network
     trainer.train()
+
+    assert_layer_parameter_type(network)
 
     train_acc_list, test_acc_list = trainer.get_history_accuracy()
     (overfit_train_acc_list, overfit_test_acc_list) = (

@@ -2,6 +2,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from common.base import Layer
+from common.default_type_array import np_float
 
 
 class Dropout(Layer):
@@ -12,7 +13,7 @@ class Dropout(Layer):
     """
 
     def __init__(self, dropout_ratio: float = 0.5) -> None:
-        self._dropout_ratio = dropout_ratio
+        self._dropout_ratio = np_float(dropout_ratio)
 
     def named_params(self) -> dict[str, NDArray[np.floating]]:
         """See the base class."""
@@ -60,7 +61,7 @@ class Dropout2d(Layer):
                 data directly, which may lead to unintended side effects
                 if the input is reused elsewhere.
         """
-        self._dropout_ratio = dropout_ratio
+        self._dropout_ratio = np_float(dropout_ratio)
         self._inplace = inplace
 
     def named_params(self) -> dict[str, NDArray[np.floating]]:

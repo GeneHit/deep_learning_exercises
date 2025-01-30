@@ -10,13 +10,14 @@ from ch06_learning_technique.a_optimization import (
     RMSProp,
 )
 from common.base import Optimizer
+from common.default_type_array import get_default_type, np_array, np_float
 
 ATOL = 1e-1
 
 
 def df_for_test(x: NDArray[np.floating]) -> NDArray[np.floating]:
     """The gradient of the function f(x) = x^2."""
-    return 2 * x
+    return np_float(2) * x
 
 
 def _update_params(
@@ -34,9 +35,9 @@ def _update_params(
 @pytest.mark.parametrize(
     "init_pos, step, lr",
     [
-        (np.array([-7.0, 2.0, 3.5]), 30, 0.1),
-        (np.array([[-7.0, 2.0], [5.5, -4.0]]), 30, 0.1),
-        (np.array([[[-7.0], [2.0]], [[5.5], [-4.0]]]), 30, 0.1),
+        (np_array([-7.0, 2.0, 3.5]), 30, 0.1),
+        (np_array([[-7.0, 2.0], [5.5, -4.0]]), 30, 0.1),
+        (np_array([[[-7.0], [2.0]], [[5.5], [-4.0]]]), 30, 0.1),
     ],
 )
 def test_sgd(
@@ -49,6 +50,7 @@ def test_sgd(
 
     # Update parameters
     pos = _update_params(optimizer, init_pos, step)
+    assert pos.dtype == get_default_type()
 
     # Check if the updated parameters are close to the origin
     assert np.allclose(pos, np.zeros_like(pos), atol=ATOL)
@@ -57,9 +59,9 @@ def test_sgd(
 @pytest.mark.parametrize(
     "init_pos, step, lr",
     [
-        (np.array([-7.0, 2.0, 3.5]), 30, 0.1),
-        (np.array([[-7.0, 2.0], [5.5, -4.0]]), 30, 0.1),
-        (np.array([[[-7.0], [2.0]], [[5.5], [-4.0]]]), 30, 0.1),
+        (np_array([-7.0, 2.0, 3.5]), 30, 0.1),
+        (np_array([[-7.0, 2.0], [5.5, -4.0]]), 30, 0.1),
+        (np_array([[[-7.0], [2.0]], [[5.5], [-4.0]]]), 30, 0.1),
     ],
 )
 def test_momentum(
@@ -73,6 +75,7 @@ def test_momentum(
 
     # Update parameters
     pos = _update_params(optimizer, init_pos, step)
+    assert pos.dtype == get_default_type()
 
     # Check if the updated parameters are close to the origin
     assert np.allclose(pos, np.zeros_like(pos), atol=ATOL)
@@ -81,9 +84,9 @@ def test_momentum(
 @pytest.mark.parametrize(
     "init_pos, step, lr",
     [
-        (np.array([-7.0, 2.0, 3.5]), 30, 0.1),
-        (np.array([[-7.0, 2.0], [5.5, -4.0]]), 30, 0.1),
-        (np.array([[[-7.0], [2.0]], [[5.5], [-4.0]]]), 30, 0.1),
+        (np_array([-7.0, 2.0, 3.5]), 30, 0.1),
+        (np_array([[-7.0, 2.0], [5.5, -4.0]]), 30, 0.1),
+        (np_array([[[-7.0], [2.0]], [[5.5], [-4.0]]]), 30, 0.1),
     ],
 )
 def test_ada_grad(
@@ -96,6 +99,7 @@ def test_ada_grad(
 
     # Update parameters using SGD
     pos = _update_params(optimizer, init_pos, step)
+    assert pos.dtype == get_default_type()
 
     # Check if the updated parameters are close to the origin
     assert np.allclose(pos, np.zeros_like(pos), atol=ATOL)
@@ -104,9 +108,9 @@ def test_ada_grad(
 @pytest.mark.parametrize(
     "init_pos, step, lr",
     [
-        (np.array([-7.0, 2.0, 3.5]), 30, 0.1),
-        (np.array([[-7.0, 2.0], [5.5, -4.0]]), 30, 0.1),
-        (np.array([[[-7.0], [2.0]], [[5.5], [-4.0]]]), 30, 0.1),
+        (np_array([-7.0, 2.0, 3.5]), 30, 0.1),
+        (np_array([[-7.0, 2.0], [5.5, -4.0]]), 30, 0.1),
+        (np_array([[[-7.0], [2.0]], [[5.5], [-4.0]]]), 30, 0.1),
     ],
 )
 def test_rms_prop(
@@ -120,6 +124,7 @@ def test_rms_prop(
 
     # Update parameters
     pos = _update_params(optimizer, init_pos, step)
+    assert pos.dtype == get_default_type()
 
     # Check if the updated parameters are close to the origin
     assert np.allclose(pos, np.zeros_like(pos), atol=ATOL)
@@ -128,9 +133,9 @@ def test_rms_prop(
 @pytest.mark.parametrize(
     "init_pos, step, lr",
     [
-        (np.array([-7.0, 2.0, 3.5]), 30, 0.1),
-        (np.array([[-7.0, 2.0], [5.5, -4.0]]), 30, 0.1),
-        (np.array([[[-7.0], [2.0]], [[5.5], [-4.0]]]), 30, 0.1),
+        (np_array([-7.0, 2.0, 3.5]), 30, 0.1),
+        (np_array([[-7.0, 2.0], [5.5, -4.0]]), 30, 0.1),
+        (np_array([[[-7.0], [2.0]], [[5.5], [-4.0]]]), 30, 0.1),
     ],
 )
 def test_adam(
@@ -145,6 +150,7 @@ def test_adam(
 
     # Update parameters
     pos = _update_params(optimizer, init_pos, step)
+    assert pos.dtype == get_default_type()
 
     # Check if the updated parameters are close to the origin
     assert np.allclose(pos, np.zeros_like(pos), atol=ATOL)
