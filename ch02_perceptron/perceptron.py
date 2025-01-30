@@ -8,7 +8,7 @@ def AND(x1: float, x2: float) -> bool:
     Returns:
         bool: The boolean result of the AND operation as evaluated by the perceptron.
     """
-    raise NotImplementedError("Implement this function!")
+    return -x1 - x2 + 1.5 < 0
 
 
 def NAND(x1: float, x2: float) -> bool:
@@ -21,7 +21,7 @@ def NAND(x1: float, x2: float) -> bool:
     Returns:
         bool: The boolean result of the NAND operation as evaluated by the perceptron.
     """
-    raise NotImplementedError("Implement this function!")
+    return x1 + x2 - 1.5 < 0
 
 
 def OR(x1: float, x2: float) -> bool:
@@ -34,7 +34,7 @@ def OR(x1: float, x2: float) -> bool:
     Returns:
         bool: The boolean result of the OR operation as evaluated by the perceptron.
     """
-    raise NotImplementedError("Implement this function!")
+    return -x1 - x2 + 0.5 < 0
 
 
 def XOR(x1: float, x2: float) -> bool:
@@ -47,4 +47,4 @@ def XOR(x1: float, x2: float) -> bool:
     Returns:
         bool: The boolean result of the XOR operation as evaluated by the perceptron.
     """
-    raise NotImplementedError("Implement this function!")
+    return 0.5 < x1 + x2 < 1.5

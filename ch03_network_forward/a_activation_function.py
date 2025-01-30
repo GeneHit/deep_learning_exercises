@@ -15,7 +15,8 @@ def sigmoid(
     Returns:
         np.ndarray of float: Output array after applying sigmoid function.
     """
-    raise NotImplementedError
+    result: np.typing.NDArray[np.floating] = 1 / (1 + np.exp(-x)) # for mypy
+    return result
 
 
 def step(x: np.typing.NDArray[np.floating]) -> np.typing.NDArray[np.floating]:
@@ -30,7 +31,7 @@ def step(x: np.typing.NDArray[np.floating]) -> np.typing.NDArray[np.floating]:
     Returns:
         np.ndarray of int: Output array after applying step function.
     """
-    raise NotImplementedError
+    return np.where(x > 0, 1, 0)
 
 
 def relu(x: np.typing.NDArray[np.floating]) -> np.typing.NDArray[np.floating]:
@@ -45,7 +46,7 @@ def relu(x: np.typing.NDArray[np.floating]) -> np.typing.NDArray[np.floating]:
     Returns:
         np.ndarray of float: Output array after applying ReLU function.
     """
-    raise NotImplementedError
+    return np.maximum(0, x)
 
 
 def identity_function(
@@ -62,7 +63,7 @@ def identity_function(
     Returns:
         np.ndarray of float: Output array after applying identity function.
     """
-    raise NotImplementedError
+    return x
 
 
 def softmax(
@@ -84,4 +85,7 @@ def softmax(
     Returns:
         np.ndarray of float: Output array after applying softmax function.
     """
-    raise NotImplementedError
+    # Subtracting the maximum value ensures numerical stability.
+    exp_x = np.exp(x - np.max(x))
+    result: np.typing.NDArray[np.floating] = exp_x / np.sum(exp_x)  # for mypy
+    return result

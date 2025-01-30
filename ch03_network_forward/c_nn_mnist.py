@@ -1,5 +1,7 @@
 import numpy as np
 
+from ch03_network_forward.a_activation_function import sigmoid, softmax
+
 
 class Simple3LayerNN:
     """3-layer full connect neural network.
@@ -38,7 +40,15 @@ class Simple3LayerNN:
         Returns:
             np.typing.NDArray[np.floating]: Output array after forward pass.
         """
-        raise NotImplementedError
+        y1 = sigmoid(
+            np.dot(x, self._parameters["W1"]) + self._parameters["b1"]
+        )
+        y2 = sigmoid(
+            np.dot(y1, self._parameters["W2"]) + self._parameters["b2"]
+            )
+        return softmax(
+            np.dot(y2, self._parameters["W3"]) + self._parameters["b3"]
+        )
 
     def accuracy_with_for_cycle(
         self,
@@ -56,7 +66,15 @@ class Simple3LayerNN:
         Returns:
             float: Accuracy of the network.
         """
-        raise NotImplementedError
+        correct_num: int = 0
+        is_one_hot: bool = t.ndim != 1
+        for idx in range(x.shape[0]):
+            y = self._predict(x[idx])
+            target = np.argmax(t[idx]) if is_one_hot else t[idx]
+            if np.argmax(y) == target:
+                correct_num += 1
+
+        return float(correct_num) / x.shape[0]
 
     def accuracy_with_batch(
         self,
@@ -74,4 +92,16 @@ class Simple3LayerNN:
         Returns:
             float: Accuracy of the network.
         """
-        raise NotImplementedError
+        batch_size: int = 100
+        correct_num: int = 0
+        is_one_hot: bool = t.ndim != 1
+        for idx in range(0, x.shape[0], batch_size):
+            y = self._predict(x[idx : idx + batch_size])
+            target = (
+                np.argmax(t[idx : idx + batch_size], axis=1)
+                if is_one_hot
+                else t[idx : idx + batch_size]
+            )
+            correct_num += np.sum(np.argmax(y, axis=1) == target)
+
+        return float(correct_num) / x.shape[0]

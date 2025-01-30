@@ -1,5 +1,7 @@
 import numpy as np
 
+from ch03_network_forward.a_activation_function import sigmoid, identity_function
+
 
 class Simple3LayerNN:
     """Three-layer full connect neural network.
@@ -15,14 +17,14 @@ class Simple3LayerNN:
 
     Explanation:
     - Input Layer:
-        - Nodes: x1, x2
+        - 2 Nodes: x1, x2
         - Fully connected to all nodes in Hidden Layer 1.
     - Hidden Layer 1:
-        - Three nodes, fully connected to Input Layer and Hidden Layer 2.
+        - 3 nodes, fully connected to Input Layer and Hidden Layer 2.
     - Hidden Layer 2:
-        - Two nodes, fully connected to Hidden Layer 1 and Output Layer.
+        - 2 nodes, fully connected to Hidden Layer 1 and Output Layer.
     - Output Layer:
-        - Two nodes: y1, y2.
+        - 2 nodes: y1, y2.
         - Fully connected to Hidden Layer 2.
 
     This network is fully connected and feedforward.
@@ -62,4 +64,8 @@ class Simple3LayerNN:
         Returns:
             np.typing.NDArray[np.floating] of float: Output array after forward pass.
         """
-        raise NotImplementedError
+        y1 = sigmoid(np.dot(x, self.parameters["W1"]) + self.parameters["b1"])
+        y2 = sigmoid(np.dot(y1, self.parameters["W2"]) + self.parameters["b2"])
+        return identity_function(
+            np.dot(y2, self.parameters["W3"]) + self.parameters["b3"]
+        )
