@@ -1,8 +1,8 @@
 import pickle
-import pytest
 import time
 
 import numpy as np
+import pytest
 
 from ch03_network_forward.c_nn_mnist import Simple3LayerNN
 from dataset.mnist import load_mnist
@@ -27,7 +27,6 @@ def mnist_test_data() -> tuple[
 
 
 class TestSimple3LayerNN:
-
     def test_accuracy_with_for_cycle(
         self,
         parameters: dict[str, np.typing.NDArray[np.floating]],

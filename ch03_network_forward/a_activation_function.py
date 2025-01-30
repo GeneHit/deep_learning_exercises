@@ -15,7 +15,7 @@ def sigmoid(
     Returns:
         np.ndarray of float: Output array after applying sigmoid function.
     """
-    result: np.typing.NDArray[np.floating] = 1 / (1 + np.exp(-x)) # for mypy
+    result: np.typing.NDArray[np.floating] = 1 / (1 + np.exp(-x))  # for mypy
     return result
 
 

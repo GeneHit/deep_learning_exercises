@@ -40,12 +40,10 @@ class Simple3LayerNN:
         Returns:
             np.typing.NDArray[np.floating]: Output array after forward pass.
         """
-        y1 = sigmoid(
-            np.dot(x, self._parameters["W1"]) + self._parameters["b1"]
-        )
+        y1 = sigmoid(np.dot(x, self._parameters["W1"]) + self._parameters["b1"])
         y2 = sigmoid(
             np.dot(y1, self._parameters["W2"]) + self._parameters["b2"]
-            )
+        )
         return softmax(
             np.dot(y2, self._parameters["W3"]) + self._parameters["b3"]
         )

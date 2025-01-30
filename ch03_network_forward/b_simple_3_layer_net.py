@@ -1,6 +1,9 @@
 import numpy as np
 
-from ch03_network_forward.a_activation_function import sigmoid, identity_function
+from ch03_network_forward.a_activation_function import (
+    identity_function,
+    sigmoid,
+)
 
 
 class Simple3LayerNN:
