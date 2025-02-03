@@ -11,6 +11,7 @@ from typing import Callable
 
 import numpy as np
 from numpy.typing import NDArray
+from tqdm import tqdm
 
 from common.base import Layer, Optimizer, Trainer
 from common.default_type_array import np_float
@@ -73,7 +74,7 @@ class LayerTraier(Trainer):
         network: Layer,
         loss: Layer,
         evaluation_fn: Callable[
-            [Layer, NDArray[np.floating], NDArray[np.floating]], float
+            [NDArray[np.floating], NDArray[np.floating]], float
         ],
         optimizer: Optimizer,
         x_train: NDArray[np.floating],
@@ -87,6 +88,7 @@ class LayerTraier(Trainer):
         evaluate_test_data: bool = True,
         evaluated_sample_per_epoch: int | None = None,
         verbose: bool = False,
+        name: str = "",
     ) -> None:
         """Initialize the trainer.
 
@@ -109,6 +111,8 @@ class LayerTraier(Trainer):
                 Number of epochs.
             mini_batch_size : int
                 Mini-batch size.
+            weight_decay_lambda : float | None
+                The lambda for the weight decay, using L2 regularization.
             evaluate_train_data : bool
                 If True, evaluate the training data.
             evaluate_test_data : bool
@@ -117,6 +121,8 @@ class LayerTraier(Trainer):
                 Number of samples to evaluate per epoch.
             verbose : bool
                 If True, print the training progress.
+            name : str
+                Name of the trainer, for process bar and logging.
         """
         self._network = network
         self._loss = loss
@@ -135,6 +141,7 @@ class LayerTraier(Trainer):
         self._evaluate_test_data = evaluate_test_data
         self._evaluated_sample_per_epoch = evaluated_sample_per_epoch
         self._verbose = verbose
+        self._name = name
 
         self._net_params = self._network.named_params()
         self._train_acc_history: list[float] = []
@@ -146,13 +153,15 @@ class LayerTraier(Trainer):
         self._test_acc_history = []
 
         self._network.train(True)
-        # TODO: use tqdm to show the progress
-        for epoch in range(self._epochs):
-            print(f"Epoch {epoch + 1}/{self._epochs}")
+        # tqdm progress bar for epochs
+        desc = self._name if self._name else "Training Progress"
+        epoch_bar = tqdm(range(self._epochs), desc=desc)
+        for epoch in epoch_bar:
             self._train_one_epoch()
 
             # output the necessary logging if necessary
             self._evaluate_if_necessary(epoch)
+        self._network.train(False)
 
     def get_final_accuracy(self) -> tuple[float, float]:
         """Get the final accuracy of the network after training.
@@ -171,9 +180,8 @@ class LayerTraier(Trainer):
                 and self._evaluated_sample_per_epoch is None
             ):
                 return self._test_acc_history[-1]
-            return self._evaluation_fn(
-                self._network, self._x_test, self._t_test
-            )
+            y = self._network.forward(self._x_test)
+            return self._evaluation_fn(y, self._t_test)
 
         def get_final_train_accuracy() -> float:
             if (
@@ -181,9 +189,8 @@ class LayerTraier(Trainer):
                 and self._evaluated_sample_per_epoch is None
             ):
                 return self._train_acc_history[-1]
-            return self._evaluation_fn(
-                self._network, self._x_train, self._t_train
-            )
+            y = self._network.forward(self._x_train)
+            return self._evaluation_fn(y, self._t_train)
 
         self._final_accuracy = (
             get_final_train_accuracy(),
@@ -209,13 +216,14 @@ class LayerTraier(Trainer):
                 x_train_sample = self._x_train[:num]
                 t_train_sample = self._t_train[:num]
 
-            train_accuracy = self._evaluation_fn(
-                self._network, x_train_sample, t_train_sample
-            )
+            y = self._network.forward(x_train_sample)
+            train_accuracy = self._evaluation_fn(y, t_train_sample)
             self._train_acc_history.append(train_accuracy)
             if self._verbose:
+                loss = self._loss.forward_to_loss(y, t_train_sample)
                 print(
-                    f"Train Accuracy at epoch {epoch + 1}: {train_accuracy:.4f}"
+                    f"Epoch {epoch + 1} Trainning: Acc {train_accuracy:.4f}; "
+                    f"Loss {loss:.4f}"
                 )
 
         # output the test accuracy if necessary
@@ -225,13 +233,14 @@ class LayerTraier(Trainer):
                 num = self._evaluated_sample_per_epoch
                 x_test_sample = self._x_test[:num]
                 t_test_sample = self._t_test[:num]
-            test_accuracy = self._evaluation_fn(
-                self._network, x_test_sample, t_test_sample
-            )
+            y = self._network.forward(x_test_sample)
+            test_accuracy = self._evaluation_fn(y, t_test_sample)
             self._test_acc_history.append(test_accuracy)
             if self._verbose:
+                loss = self._loss.forward_to_loss(y, t_test_sample)
                 print(
-                    f"Test Accuracy at epoch {epoch + 1}: {test_accuracy:.4f}"
+                    f"Epoch {epoch + 1} Test: Acc {test_accuracy:.4f}; "
+                    f"Loss {loss:.4f}"
                 )
 
         # set the network to the training mode

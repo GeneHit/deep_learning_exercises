@@ -39,8 +39,8 @@ def test_hyper_parameter_optimization() -> None:
         t_train=t_train,
         x_test=x_val,
         t_test=t_val,
-        weight_decay_bounds=(-8, -4),
-        learning_rate_bounds=(-6, -2),
+        weight_decay_log_bounds=(-8, -4),
+        learning_rate_log_bounds=(-6, -2),
         epochs=50,
         mini_batch_size=100,
         verbose=False,
@@ -61,31 +61,39 @@ def _plot_result(results: dict[str, tuple[list[float], list[float]]]) -> None:
     row_num = int(np.ceil(graph_draw_num / col_num))
     i = 0
 
-    for key, acc_list in sorted(
+    # Sort results by last validation accuracy
+    sorted_results = sorted(
         results.items(), key=lambda x: x[1][1][-1], reverse=True
-    ):
+    )
+
+    _, axes = plt.subplots(row_num, col_num, figsize=(15, 8))
+    axes = axes.flatten()  # Convert to a flat list for easier indexing
+
+    for key, acc_list in sorted_results:
         val_acc_list = acc_list[1]
-        print(
-            "Best-"
-            + str(i + 1)
-            + "(val acc:"
-            + str(val_acc_list[-1])
-            + ") | "
-            + key
-        )
+        print(f"Best-{i + 1} (val acc: {val_acc_list[-1]}) | {key}")
 
-        plt.subplot(row_num, col_num, i + 1)
-        plt.title("Best-" + str(i + 1))
-        plt.ylim(0.0, 1.0)
-        if i % 5:
-            plt.yticks([])
-        plt.xticks([])
+        ax = axes[i]
+        ax.set_title(f"Best-{i + 1}")
+        ax.set_ylim(0.0, 1.0)
+
+        if i % col_num:
+            ax.set_yticks([])
+        ax.set_xticks([])
+
         x = np.arange(len(val_acc_list))
-        plt.plot(x, val_acc_list)
-        plt.plot(x, acc_list[0], "--")
-        i += 1
+        # Validation accuracy with solid line
+        ax.plot(x, val_acc_list, label="Validation Accuracy", linestyle="-")
+        # Training accuracy with dashed line
+        ax.plot(x, acc_list[0], label="Training Accuracy", linestyle="--")
 
+        i += 1
         if i >= graph_draw_num:
             break
 
+    # Add legend to the last subplot
+    if i > 0:
+        axes[i - 1].legend(loc="upper left")  # Legend only in the last subplot
+
+    plt.tight_layout()
     plt.show()

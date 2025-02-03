@@ -32,17 +32,10 @@ class BackPropTwoLayerNN(TwoLayerNN):
         """
         raise NotImplementedError
 
-    def predict(
-        self, x: NDArray[np.floating], train_flag: bool = False
-    ) -> NDArray[np.floating]:
+    def predict(self, x: NDArray[np.floating]) -> NDArray[np.floating]:
         raise NotImplementedError
 
-    def loss(
-        self,
-        x: NDArray[np.floating],
-        t: NDArray[np.floating],
-        train_flag: bool = False,
-    ) -> float:
+    def loss(self, x: NDArray[np.floating], t: NDArray[np.floating]) -> float:
         raise NotImplementedError
 
     def accuracy(

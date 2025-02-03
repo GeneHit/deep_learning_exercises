@@ -33,7 +33,7 @@ class Layer(abc.ABC):
     def forward_to_loss(
         self,
         x: NDArray[np.floating],
-        t: NDArray[np.floating],
+        t: NDArray[np.floating | np.integer],
     ) -> float:
         """Forward pass of the layer.
 
@@ -42,7 +42,7 @@ class Layer(abc.ABC):
 
         Parameters:
             x (NDArray[np.floating]): Input data.
-            t (NDArray[np.floating]): Target output.
+            t (NDArray[np.floating | np.integer]): Target output.
 
         Returns:
             float: Loss value.
@@ -111,7 +111,10 @@ class Optimizer(abc.ABC):
     ) -> None:
         """Update the parameters using the gradients once.
 
-        Have to use the inplace operation to update the parameters.
+        1. Have to use the inplace operation to update the parameters.
+        2. Use the key of grads to update the corresponding parameters,
+            because the params may have other parameters that aren't necessary
+            to be updated, like the moving average of the batch normalization.
 
         Parameters:
             params : dict[str, NDArray[np.floating]]

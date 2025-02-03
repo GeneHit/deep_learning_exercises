@@ -35,34 +35,23 @@ class TwoLayerNN:
         """
         return self._params
 
-    def predict(
-        self,
-        x: NDArray[np.floating],
-        train_flag: bool = False,
-    ) -> NDArray[np.floating]:
+    def predict(self, x: NDArray[np.floating]) -> NDArray[np.floating]:
         """Predict the output for the given input.
 
         Parameters:
             x (NDArray[np.floating]): Input data.
-            train_flag (bool): Training flag.
 
         Returns:
             NDArray[np.floating]: Predicted output.
         """
         raise NotImplementedError("The predict method is not implemented yet.")
 
-    def loss(
-        self,
-        x: NDArray[np.floating],
-        t: NDArray[np.floating],
-        train_flag: bool = False,
-    ) -> float:
+    def loss(self, x: NDArray[np.floating], t: NDArray[np.floating]) -> float:
         """Calculate the loss for the given input and target output.
 
         Parameters:
             x (NDArray[np.floating]): Input data.
             t (NDArray[np.floating]): Target output.
-            train_flag (bool): Training flag.
 
         Returns:
             float: Loss value.
@@ -138,5 +127,6 @@ def training(
         verbose (bool): Flag to print the training loss every epoch.
 
     Returns:
-        training losses : tuple[list[float], list[float], list[float]]"""
+        training losses : list[float]
+    """
     raise NotImplementedError("The training method is not implemented yet.")

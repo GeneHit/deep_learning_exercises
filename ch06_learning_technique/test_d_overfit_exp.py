@@ -17,7 +17,6 @@ from common.utils import assert_layer_parameter_type
 from dataset.mnist import load_mnist
 
 EPOCHS = 200
-HIDDEN_SIZES = (100, 100, 100, 100, 100, 100)
 
 
 # Use the module scope to load the MNIST data only once, then share it across
@@ -59,15 +58,19 @@ def overfit_nn(
     config = SequentialConfig(
         # input_dim=(784,),
         hidden_layer_configs=(
-            AffineConfig(in_size=784, out_size=100, initializer="he_normal"),
+            AffineConfig(in_size=784, out_size=100, param_suffix="1"),
             ReLUConfig(),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            AffineConfig(in_size=100, out_size=100, param_suffix="2"),
             ReLUConfig(),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            AffineConfig(in_size=100, out_size=100, param_suffix="3"),
             ReLUConfig(),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            AffineConfig(in_size=100, out_size=100, param_suffix="4"),
             ReLUConfig(),
-            AffineConfig(in_size=100, out_size=10, initializer="he_normal"),
+            AffineConfig(in_size=100, out_size=100, param_suffix="5"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=100, param_suffix="6"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=10, param_suffix="7"),
         ),
     )
     network = config.create()
@@ -82,8 +85,9 @@ def overfit_nn(
         x_test=x_test,
         t_test=t_test,
         epochs=EPOCHS,
-        mini_batch_size=100,
-        evaluate_test_data=False,
+        mini_batch_size=99,
+        name="OverfitNN",
+        verbose=False,
     )
     # Train the network
     trainer.train()
@@ -108,15 +112,19 @@ def test_overfit_with_weight_decay(
     config = SequentialConfig(
         # input_dim=(784,),
         hidden_layer_configs=(
-            AffineConfig(in_size=784, out_size=100, initializer="he_normal"),
+            AffineConfig(in_size=784, out_size=100, param_suffix="1"),
             ReLUConfig(),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            AffineConfig(in_size=100, out_size=100, param_suffix="2"),
             ReLUConfig(),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            AffineConfig(in_size=100, out_size=100, param_suffix="3"),
             ReLUConfig(),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            AffineConfig(in_size=100, out_size=100, param_suffix="4"),
             ReLUConfig(),
-            AffineConfig(in_size=100, out_size=10, initializer="he_normal"),
+            AffineConfig(in_size=100, out_size=100, param_suffix="5"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=100, param_suffix="6"),
+            ReLUConfig(),
+            AffineConfig(in_size=100, out_size=10, param_suffix="7"),
         ),
     )
     network = config.create()
@@ -131,9 +139,10 @@ def test_overfit_with_weight_decay(
         x_test=x_test,
         t_test=t_test,
         epochs=EPOCHS,
-        mini_batch_size=100,
-        evaluate_test_data=False,
+        mini_batch_size=99,
         weight_decay_lambda=0.1,
+        name="WeightDecayExp",
+        verbose=False,
     )
 
     # Train the network
@@ -152,6 +161,7 @@ def test_overfit_with_weight_decay(
             test_acc_list,
             overfit_train_acc_list,
             overfit_test_acc_list,
+            showing_time=None,
         )
     # the weight decay should reduce the overfitting
     assert (train_acc_list[-1] - test_acc_list[-1]) < (
@@ -171,22 +181,29 @@ def test_overfit_with_dropout(
     ((x_train, t_train), (x_test, t_test)) = mnist_data
 
     # Initialization
+    dropout_ratio = 0.2
     config = SequentialConfig(
         # input_dim=(784,),
         hidden_layer_configs=(
-            AffineConfig(in_size=784, out_size=100, initializer="he_normal"),
+            AffineConfig(in_size=784, out_size=100, param_suffix="1"),
             ReLUConfig(),
-            DropoutConfig(),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            DropoutConfig(dropout_ratio=dropout_ratio),
+            AffineConfig(in_size=100, out_size=100, param_suffix="2"),
             ReLUConfig(),
-            DropoutConfig(),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            DropoutConfig(dropout_ratio=dropout_ratio),
+            AffineConfig(in_size=100, out_size=100, param_suffix="3"),
             ReLUConfig(),
-            DropoutConfig(),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            DropoutConfig(dropout_ratio=dropout_ratio),
+            AffineConfig(in_size=100, out_size=100, param_suffix="4"),
             ReLUConfig(),
-            DropoutConfig(),
-            AffineConfig(in_size=100, out_size=10, initializer="he_normal"),
+            DropoutConfig(dropout_ratio=dropout_ratio),
+            AffineConfig(in_size=100, out_size=100, param_suffix="5"),
+            ReLUConfig(),
+            DropoutConfig(dropout_ratio=dropout_ratio),
+            AffineConfig(in_size=100, out_size=100, param_suffix="6"),
+            ReLUConfig(),
+            DropoutConfig(dropout_ratio=dropout_ratio),
+            AffineConfig(in_size=100, out_size=10, param_suffix="7"),
         ),
     )
     network = config.create()
@@ -202,7 +219,7 @@ def test_overfit_with_dropout(
         t_test=t_test,
         epochs=EPOCHS,
         mini_batch_size=100,
-        evaluate_test_data=False,
+        name="DropoutExp",
     )
 
     # Train the network
@@ -221,6 +238,7 @@ def test_overfit_with_dropout(
             test_acc_list,
             overfit_train_acc_list,
             overfit_test_acc_list,
+            showing_time=None,
         )
     # the dropout should reduce the overfitting
     assert (train_acc_list[-1] - test_acc_list[-1]) < (
@@ -233,27 +251,36 @@ def _plot_accuracy(
     test_acc_list: list[float],
     overfit_train_acc_list: list[float],
     overfit_test_acc_list: list[float],
+    showing_time: float | None = 2.0,
 ) -> None:
     """Plot the accuracy history."""
     x = np.arange(len(train_acc_list))
-    plt.plot(x, train_acc_list, marker="o", label="train")
-    plt.plot(x, test_acc_list, marker="s", label="test")
-    plt.plot(
-        x,
-        overfit_train_acc_list,
-        marker="o",
-        linestyle="--",
-        label="overfit train",
-    )
-    plt.plot(
-        x,
-        overfit_test_acc_list,
-        marker="s",
-        linestyle="--",
-        label="overfit test",
-    )
+    if train_acc_list:
+        plt.plot(x, train_acc_list, marker="o", label="train")
+    if test_acc_list:
+        plt.plot(x, test_acc_list, marker="s", label="test")
+    if overfit_train_acc_list:
+        plt.plot(
+            x,
+            overfit_train_acc_list,
+            marker="o",
+            linestyle="--",
+            label="overfit train",
+        )
+    if overfit_test_acc_list:
+        plt.plot(
+            x,
+            overfit_test_acc_list,
+            marker="s",
+            linestyle="--",
+            label="overfit test",
+        )
     plt.xlabel("epochs")
     plt.ylabel("accuracy")
     plt.ylim(0, 1.0)
     plt.legend(loc="lower right")
-    plt.show()
+    if showing_time is not None:
+        plt.pause(showing_time)  # Show the figure for 2 seconds
+        plt.close()  # Close the figure properly
+    else:
+        plt.show()

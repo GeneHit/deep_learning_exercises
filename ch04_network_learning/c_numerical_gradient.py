@@ -37,7 +37,7 @@ def numerical_gradient_descend(
 ) -> np.typing.NDArray[np.floating]:
     """Calculate numerical gradient descend for a n-dimensional function.
 
-    The formulation of numerical gradient descend is as follows:
+    The formulation of stochastic gradient descend is as follows:
         x = x - learning_rate * grad
 
     Parameters:

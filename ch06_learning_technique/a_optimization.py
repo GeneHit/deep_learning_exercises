@@ -33,20 +33,21 @@ class Momentum(Optimizer):
 
     The formulation is as follows:
 
-        v = momentum * v - lr * grads
-        params = params + v
+        m_t = beta * m_{t-1} - self._lr * grads
+        params = params + m_t
 
     """
 
-    def __init__(self, lr: float = 0.01, momentum: float = 0.9) -> None:
+    def __init__(self, lr: float = 0.01, beta: float = 0.9) -> None:
         """Initialize the Momentum optimizer.
 
         Parameters:
             lr (float): Learning rate.
-            momentum (float): Momentum factor.
+            beta (float): Momentum factor.
         """
         self._lr = np_float(lr)
-        self._momentum = np_float(momentum)
+        self._beta = np_float(beta)
+        self._m: dict[str, NDArray[np.floating]] | None = None
 
     def one_step(
         self,
@@ -62,8 +63,8 @@ class AdaGrad(Optimizer):
 
     The formulation is as follows:
 
-        h += grads * grads
-        params = params - lr * grads / (np.sqrt(h) + 1e-7)
+        v += grads * grads
+        params = params - lr * grads / (np.sqrt(v) + 1e-8)
 
     """
 
@@ -89,8 +90,8 @@ class RMSProp(Optimizer):
 
     The formulation is as follows:
 
-        h = decay_rate * h + (1 - decay_rate) * grads * grads
-        params = params - lr * grads / (np.sqrt(h) + 1e-7)
+        v_t = decay_rate * v_{t-1} + (1 - decay_rate) * grads * grads
+        params = params - lr * grads / (np.sqrt(v_t) + 1e-8)
 
     """
 
@@ -118,11 +119,11 @@ class Adam(Optimizer):
 
     The formulation is as follows:
 
-        m = beta1 * m + (1 - beta1) * grads
-        v = beta2 * v + (1 - beta2) * grads * grads
-        m_hat = m / (1 - beta1)
-        v_hat = v / (1 - beta2)
-        params = params - lr * m_hat / (np.sqrt(v_hat) + 1e-7)
+        m_t = beta1 * m_{t-1} + (1 - beta1) * grads
+        v_t = beta2 * v_{t-1} + (1 - beta2) * grads * grads
+        m_hat = m_t / (1 - beta1)
+        v_hat = v_t / (1 - beta2)
+        params = params - lr * m_hat / (np.sqrt(v_hat) + 1e-8)
 
     """
 

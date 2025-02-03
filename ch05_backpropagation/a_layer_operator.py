@@ -7,8 +7,8 @@ class AddLayer:
 
     The grapfical representation of the layer is:
 
-        x1  ----> (+) ----> x1 + x2
-        x2  ----/
+        x  ----> (+) ----> x + y
+        y  ----/
     """
 
     def forward(
@@ -29,12 +29,16 @@ class MulLayer:
 
     The graphical representation of the layer is:
 
-        x1  ----> (*) ----> x1 * x2
-        x2  ----/
+        x  ----> (*) ----> x * y
+        y  ----/
     """
 
+    def __init__(self) -> None:
+        self._x: NDArray[np.floating] | None = None
+        self._y: NDArray[np.floating] | None = None
+
     def forward(
-        self, x1: NDArray[np.floating], x2: NDArray[np.floating]
+        self, x: NDArray[np.floating], y: NDArray[np.floating]
     ) -> NDArray[np.floating]:
         """Forward pass of the layer."""
         raise NotImplementedError("The forward method is not implemented yet.")
@@ -51,12 +55,16 @@ class DivisorLayer:
 
     The graphical representation of the layer is:
 
-        x1  ----> (/) ----> x1 / x2
-        x2  ----/
+        x  ----> (/) ----> x / y
+        y  ----/
     """
 
+    def __init__(self) -> None:
+        self._x: NDArray[np.floating] | None = None
+        self._y: NDArray[np.floating] | None = None
+
     def forward(
-        self, x1: NDArray[np.floating], x2: NDArray[np.floating]
+        self, x: NDArray[np.floating], y: NDArray[np.floating]
     ) -> NDArray[np.floating]:
         """Forward pass of the layer."""
         raise NotImplementedError("The forward method is not implemented yet.")
@@ -75,6 +83,9 @@ class ExpoLayer:
 
         x  ----> (exp) ----> exp(x)
     """
+
+    def __init__(self) -> None:
+        self._exp_x: NDArray[np.floating] | None = None
 
     def forward(self, x: NDArray[np.floating]) -> NDArray[np.floating]:
         """Forward pass of the layer."""
