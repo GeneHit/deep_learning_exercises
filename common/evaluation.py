@@ -1,13 +1,9 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from common.base import Layer
-
-THRESHOLD_for_MultiLable = 0.9
-
 
 def single_label_accuracy(
-    network: Layer, x: NDArray[np.floating], t: NDArray[np.floating]
+    y: NDArray[np.floating], t: NDArray[np.floating]
 ) -> float:
     """Calculate the accuracy for a single-label classification model.
 
@@ -18,9 +14,7 @@ def single_label_accuracy(
     and one-hot encoded labels for the ground truth.
 
     Parameters:
-        network (Layer): The model (or layer) to evaluate. It must have a `forward`
-                         method that accepts the input `x` and returns the predictions.
-        x (NDArray[np.floating]): Input data, a NumPy array of shape
+        y (NDArray[np.floating]): Input data, a NumPy array of shape
                                   `(num_samples, num_features)`.
         t (NDArray[np.floating]): True labels for single-label classification:
                                   - If integer class indices: shape `(num_samples,)`.
@@ -37,17 +31,16 @@ def single_label_accuracy(
         - For multi-label classification tasks (where samples may belong to multiple
           classes), use a different function.
     """
-    y = network.forward(x)
     y = np.argmax(y, axis=1)  # Get predicted class labels
     if t.ndim != 1:  # Convert one-hot encoded labels to class indices if needed
         t = np.argmax(t, axis=1)
 
-    accuracy = float(np.sum(y == t)) / float(x.shape[0])  # Calculate accuracy
+    accuracy = float(np.sum(y == t)) / float(y.shape[0])  # Calculate accuracy
     return accuracy
 
 
 def multilabel_accuracy(
-    network: Layer, x: NDArray[np.floating], t: NDArray[np.floating]
+    y: NDArray[np.floating], t: NDArray[np.floating], threshold: float = 0.7
 ) -> float:
     """Calculate the accuracy for a multi-label classification model.
 
@@ -57,12 +50,7 @@ def multilabel_accuracy(
     the ratio of samples where all predicted labels exactly match the true labels.
 
     Parameters:
-        network (Layer): The model (or layer) to evaluate. It must have a `forward`
-                         method that accepts the input `x` and returns the predictions.
-                         The output should be a NumPy array of shape
-                         `(num_samples, num_labels)` where each value is the score
-                         (e.g., probability) for a label.
-        x (NDArray[np.floating]): Input data, a NumPy array of shape
+        y (NDArray[np.floating]): Input data, a NumPy array of shape
                                   `(num_samples, num_features)`.
         t (NDArray[np.floating]): True binary labels, a NumPy array of shape
                                   `(num_samples, num_labels)` where each value is
@@ -82,15 +70,12 @@ def multilabel_accuracy(
           the true labels for each sample. If partial matches are acceptable,
           consider using other metrics like F1-score or Hamming loss.
     """
-    # Perform a forward pass through the model to get predictions
-    y = network.forward(x)
-
     # Convert predictions to binary labels using the specified threshold
-    y = (y > THRESHOLD_for_MultiLable).astype(np.int8)
+    y = (y > threshold).astype(np.int8)
 
     # Check if all predicted labels match the true labels for each sample
     # `all(axis=1)` ensures that every label in a sample must match
-    accuracy = float(np.sum((y == t).all(axis=1))) / float(x.shape[0])
+    accuracy = float(np.sum((y == t).all(axis=1))) / float(y.shape[0])
 
     # Return the calculated accuracy
     return accuracy

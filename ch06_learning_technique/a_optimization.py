@@ -2,7 +2,9 @@ import numpy as np
 from numpy.typing import NDArray
 
 from common.base import Optimizer
-from common.default_type_array import np_float
+from common.default_type_array import np_float, np_zeros_like
+
+EPSILON = np_float(1e-8)
 
 
 class SGD(Optimizer):
@@ -25,7 +27,8 @@ class SGD(Optimizer):
         grads: dict[str, NDArray[np.floating]],
     ) -> None:
         """See the base class."""
-        raise NotImplementedError
+        for key in grads.keys():
+            params[key] -= self._lr * grads[key]
 
 
 class Momentum(Optimizer):
@@ -33,20 +36,21 @@ class Momentum(Optimizer):
 
     The formulation is as follows:
 
-        v = momentum * v - lr * grads
-        params = params + v
+        m_t = beta * m_{t-1} - self._lr * grads
+        params = params + m_t
 
     """
 
-    def __init__(self, lr: float = 0.01, momentum: float = 0.9) -> None:
+    def __init__(self, lr: float = 0.01, beta: float = 0.9) -> None:
         """Initialize the Momentum optimizer.
 
         Parameters:
             lr (float): Learning rate.
-            momentum (float): Momentum factor.
+            beta (float): Momentum factor.
         """
         self._lr = np_float(lr)
-        self._momentum = np_float(momentum)
+        self._beta = np_float(beta)
+        self._m: dict[str, NDArray[np.floating]] | None = None
 
     def one_step(
         self,
@@ -54,7 +58,12 @@ class Momentum(Optimizer):
         grads: dict[str, NDArray[np.floating]],
     ) -> None:
         """See the base class."""
-        raise NotImplementedError
+        if self._m is None:
+            self._m = {key: np_zeros_like(val) for key, val in params.items()}
+
+        for key in grads.keys():
+            self._m[key] = self._beta * self._m[key] - self._lr * grads[key]
+            params[key] += self._m[key]
 
 
 class AdaGrad(Optimizer):
@@ -62,8 +71,8 @@ class AdaGrad(Optimizer):
 
     The formulation is as follows:
 
-        h += grads * grads
-        params = params - lr * grads / (np.sqrt(h) + 1e-7)
+        v += grads * grads
+        params = params - lr * grads / (np.sqrt(v) + 1e-8)
 
     """
 
@@ -74,6 +83,7 @@ class AdaGrad(Optimizer):
             lr (float): Learning rate.
         """
         self._lr = np_float(lr)
+        self._v: dict[str, NDArray[np.floating]] | None = None
 
     def one_step(
         self,
@@ -81,7 +91,14 @@ class AdaGrad(Optimizer):
         grads: dict[str, NDArray[np.floating]],
     ) -> None:
         """See the base class."""
-        raise NotImplementedError
+        if self._v is None:
+            self._v = {key: np_zeros_like(val) for key, val in params.items()}
+
+        for key in grads.keys():
+            self._v[key] += grads[key] * grads[key]
+            params[key] -= (
+                self._lr * grads[key] / (np.sqrt(self._v[key]) + EPSILON)
+            )
 
 
 class RMSProp(Optimizer):
@@ -89,8 +106,8 @@ class RMSProp(Optimizer):
 
     The formulation is as follows:
 
-        h = decay_rate * h + (1 - decay_rate) * grads * grads
-        params = params - lr * grads / (np.sqrt(h) + 1e-7)
+        v_t = decay_rate * v_{t-1} + (1 - decay_rate) * grads * grads
+        params = params - lr * grads / (np.sqrt(v_t) + 1e-8)
 
     """
 
@@ -103,6 +120,7 @@ class RMSProp(Optimizer):
         """
         self._lr = np_float(lr)
         self._decay_rate = np_float(decay_rate)
+        self._v: dict[str, NDArray[np.floating]] | None = None
 
     def one_step(
         self,
@@ -110,7 +128,17 @@ class RMSProp(Optimizer):
         grads: dict[str, NDArray[np.floating]],
     ) -> None:
         """See the base class."""
-        raise NotImplementedError
+        if self._v is None:
+            self._v = {key: np_zeros_like(val) for key, val in params.items()}
+
+        for key in grads.keys():
+            self._v[key] = (
+                self._decay_rate * self._v[key]
+                + (1 - self._decay_rate) * grads[key] * grads[key]
+            )
+            params[key] -= (
+                self._lr * grads[key] / (np.sqrt(self._v[key]) + EPSILON)
+            )
 
 
 class Adam(Optimizer):
@@ -118,11 +146,11 @@ class Adam(Optimizer):
 
     The formulation is as follows:
 
-        m = beta1 * m + (1 - beta1) * grads
-        v = beta2 * v + (1 - beta2) * grads * grads
-        m_hat = m / (1 - beta1)
-        v_hat = v / (1 - beta2)
-        params = params - lr * m_hat / (np.sqrt(v_hat) + 1e-7)
+        m_t = beta1 * m_{t-1} + (1 - beta1) * grads
+        v_t = beta2 * v_{t-1} + (1 - beta2) * grads * grads
+        m_hat = m_t / (1 - beta1)
+        v_hat = v_t / (1 - beta2)
+        params = params - lr * m_hat / (np.sqrt(v_hat) + 1e-8)
 
     """
 
@@ -139,6 +167,8 @@ class Adam(Optimizer):
         self._lr = np_float(lr)
         self._beta1 = np_float(beta1)
         self._beta2 = np_float(beta2)
+        self._m: dict[str, NDArray[np.floating]] | None = None
+        self._v: dict[str, NDArray[np.floating]] | None = None
 
     def one_step(
         self,
@@ -146,4 +176,22 @@ class Adam(Optimizer):
         grads: dict[str, NDArray[np.floating]],
     ) -> None:
         """See the base class."""
-        raise NotImplementedError
+        if self._m is None:
+            self._m = {key: np_zeros_like(val) for key, val in params.items()}
+        if self._v is None:
+            self._v = {key: np_zeros_like(val) for key, val in params.items()}
+
+        for key in grads.keys():
+            self._m[key] = (
+                self._beta1 * self._m[key]
+                + (np_float(1) - self._beta1) * grads[key]
+            )
+            self._v[key] = (
+                self._beta2 * self._v[key]
+                + (np_float(1) - self._beta2) * grads[key] * grads[key]
+            )
+            # In the initial stage, it tends to be biased toward 0, so bias
+            # correction is needed.
+            m_hat = self._m[key] / (np_float(1) - self._beta1)
+            v_hat = self._v[key] / (np_float(1) - self._beta2)
+            params[key] -= self._lr * m_hat / (np.sqrt(v_hat) + EPSILON)

@@ -38,7 +38,7 @@ def mnist_data() -> tuple[
         normalize=True, flatten=True
     )
     # Use only 300 samples for testing the overfitting
-    return (x_train[:1000], t_train[:1000]), (x_test, t_test)
+    return (x_train[:300], t_train[:300]), (x_test, t_test)
 
 
 @pytest.fixture(scope="module")
@@ -59,15 +59,15 @@ def overfit_nn(
     config = SequentialConfig(
         # input_dim=(784,),
         hidden_layer_configs=(
-            AffineConfig(in_size=784, out_size=100, initializer="he_normal"),
+            AffineConfig(in_size=784, out_size=100, param_suffix="1"),
             ReLUConfig(),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            AffineConfig(in_size=100, out_size=100, param_suffix="2"),
             ReLUConfig(),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            AffineConfig(in_size=100, out_size=100, param_suffix="3"),
             ReLUConfig(),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
+            AffineConfig(in_size=100, out_size=100, param_suffix="4"),
             ReLUConfig(),
-            AffineConfig(in_size=100, out_size=10, initializer="he_normal"),
+            AffineConfig(in_size=100, out_size=10, param_suffix="5"),
         ),
     )
     network = config.create()
@@ -84,11 +84,11 @@ def overfit_nn(
         epochs=EPOCHS,
         mini_batch_size=100,
         evaluate_test_data=False,
+        name="OverfitNN",
     )
 
     # Train the network
     trainer.train()
-
     assert_layer_parameter_type(network)
 
     return trainer
@@ -109,20 +109,20 @@ def test_batch_normalization(
     config = SequentialConfig(
         # input_dim=(784,),
         hidden_layer_configs=(
-            AffineConfig(in_size=784, out_size=100, initializer="he_normal"),
-            BatchNorm1dConfig(num_feature=100),
+            AffineConfig(in_size=784, out_size=100, param_suffix="1"),
+            BatchNorm1dConfig(num_feature=100, param_suffix="1"),
             # use inplace to save memory avoiding to create a new array
             ReLUConfig(inplace=True),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
-            BatchNorm1dConfig(num_feature=100),
+            AffineConfig(in_size=100, out_size=100, param_suffix="2"),
+            BatchNorm1dConfig(num_feature=100, param_suffix="2"),
             ReLUConfig(inplace=True),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
-            BatchNorm1dConfig(num_feature=100),
+            AffineConfig(in_size=100, out_size=100, param_suffix="3"),
+            BatchNorm1dConfig(num_feature=100, param_suffix="3"),
             ReLUConfig(inplace=True),
-            AffineConfig(in_size=100, out_size=100, initializer="he_normal"),
-            BatchNorm1dConfig(num_feature=100),
+            AffineConfig(in_size=100, out_size=100, param_suffix="4"),
+            BatchNorm1dConfig(num_feature=100, param_suffix="4"),
             ReLUConfig(inplace=True),
-            AffineConfig(in_size=100, out_size=10, initializer="he_normal"),
+            AffineConfig(in_size=100, out_size=10, param_suffix="5"),
         ),
     )
     network = config.create()
@@ -137,27 +137,25 @@ def test_batch_normalization(
         x_test=x_test,
         t_test=t_test,
         epochs=EPOCHS,
-        mini_batch_size=100,
+        mini_batch_size=99,
         evaluate_test_data=False,
+        name="BatchNormExp",
     )
 
     # Train the network
     trainer.train()
-
     assert_layer_parameter_type(network)
 
-    train_acc_list, test_acc_list = trainer.get_history_accuracy()
-    (overfit_train_acc_list, overfit_test_acc_list) = (
-        overfit_nn.get_history_accuracy()
-    )
+    train_acc_list, _ = trainer.get_history_accuracy()
+    (overfit_train_acc_list, _) = overfit_nn.get_history_accuracy()
     # Set to True to plot the accuracy history for comparison
     plot_data = False
     if plot_data:
         _plot_accuracy(
             train_acc_list,
-            test_acc_list,
+            [],
             overfit_train_acc_list,
-            overfit_test_acc_list,
+            [],
+            showing_time=None,
         )
     assert train_acc_list[-1] > overfit_train_acc_list[-1]
-    assert test_acc_list[-1] > overfit_test_acc_list[-1]

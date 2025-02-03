@@ -1,6 +1,10 @@
 import numpy as np
 from numpy.typing import NDArray
 
+from ch03_network_forward.a_activation_function import sigmoid, softmax
+from ch04_network_learning.a_loss_function import cross_entropy_error
+from ch04_network_learning.c_numerical_gradient import numerical_gradient
+
 
 class TwoLayerNN:
     """A two-layer neural network.
@@ -35,39 +39,30 @@ class TwoLayerNN:
         """
         return self._params
 
-    def predict(
-        self,
-        x: NDArray[np.floating],
-        train_flag: bool = False,
-    ) -> NDArray[np.floating]:
+    def predict(self, x: NDArray[np.floating]) -> NDArray[np.floating]:
         """Predict the output for the given input.
 
         Parameters:
             x (NDArray[np.floating]): Input data.
-            train_flag (bool): Training flag.
 
         Returns:
             NDArray[np.floating]: Predicted output.
         """
-        raise NotImplementedError("The predict method is not implemented yet.")
+        z1 = sigmoid(np.dot(x, self._params["W1"]) + self._params["b1"])
+        return softmax(np.dot(z1, self._params["W2"]) + self._params["b2"])
 
-    def loss(
-        self,
-        x: NDArray[np.floating],
-        t: NDArray[np.floating],
-        train_flag: bool = False,
-    ) -> float:
+    def loss(self, x: NDArray[np.floating], t: NDArray[np.floating]) -> float:
         """Calculate the loss for the given input and target output.
 
         Parameters:
             x (NDArray[np.floating]): Input data.
             t (NDArray[np.floating]): Target output.
-            train_flag (bool): Training flag.
 
         Returns:
             float: Loss value.
         """
-        raise NotImplementedError("The loss method is not implemented yet.")
+        y = self.predict(x)
+        return cross_entropy_error(y, t)
 
     def accuracy(
         self, x: NDArray[np.floating], t: NDArray[np.floating]
@@ -81,7 +76,12 @@ class TwoLayerNN:
         Returns:
             float: Accuracy value.
         """
-        raise NotImplementedError("The accuracy method is not implemented yet.")
+        y = self.predict(x)
+        y = np.argmax(y, axis=1)
+        # one hot means the label is one hot encoded like [0, 0, 1, 0, 0]
+        is_one_hot = t.ndim != 1
+        target = np.argmax(t, axis=1) if is_one_hot else t
+        return float(np.sum(y == target) / float(x.shape[0]))
 
     def _numerical_gradient(
         self, x: NDArray[np.floating], t: NDArray[np.floating]
@@ -95,9 +95,18 @@ class TwoLayerNN:
         Returns:
             dict[str, NDArray[np.floating]]: Gradients of the weights and biases.
         """
-        raise NotImplementedError(
-            "The numerical_gradient method is not implemented yet."
-        )
+
+        # the self.loss already has the self._param. unsed is for mypy
+        def loss_w(unused: np.typing.NDArray[np.floating]) -> float:
+            return self.loss(x, t)
+
+        grad: dict[str, NDArray[np.floating]] = {}
+        for key in self._params.keys():
+            # the numerical_gradient will change the mutable self._param[key]
+            # inside
+            grad[key] = numerical_gradient(loss_w, self._params[key])
+
+        return grad
 
     def gradient(
         self, x: NDArray[np.floating], t: NDArray[np.floating]
@@ -138,5 +147,25 @@ def training(
         verbose (bool): Flag to print the training loss every epoch.
 
     Returns:
-        training losses : tuple[list[float], list[float], list[float]]"""
-    raise NotImplementedError("The training method is not implemented yet.")
+        training losses : list[float]
+    """
+    training_losses: list[float] = []
+    data_size = x_train.shape[0]
+    batch_idx = 0
+    params = network.named_parameters()
+    for epoch in range(epochs):
+        for i in range(0, data_size, batch_size):
+            batch_idx += 1
+            x_batch = x_train[i : i + batch_size]
+            t_batch = t_train[i : i + batch_size]
+
+            grad = network.gradient(x_batch, t_batch)
+            for key in grad.keys():
+                params[key] -= learning_rate * grad[key]
+
+        loss = network.loss(x_train, t_train)
+        training_losses.append(loss)
+        if verbose:
+            print(f"Epoch {epoch + 1}/{epochs}: loss {loss}")
+
+    return training_losses

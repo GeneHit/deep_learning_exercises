@@ -65,6 +65,7 @@ class Simple3LayerNN:
             float: Accuracy of the network.
         """
         correct_num: int = 0
+        # one hot means the label is one hot encoded like [0, 0, 1, 0, 0]
         is_one_hot: bool = t.ndim != 1
         for idx in range(x.shape[0]):
             y = self._predict(x[idx])

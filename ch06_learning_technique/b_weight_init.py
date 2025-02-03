@@ -1,7 +1,14 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from common.default_type_array import get_default_type
+from common.default_type_array import (
+    get_default_type,
+    np_float,
+    np_ones,
+    np_randn,
+    np_uniform,
+    np_zeros,
+)
 
 D_TYPE = get_default_type()
 
@@ -70,7 +77,38 @@ def generate_init_weight(
     Returns:
         np.ndarray: Initialized weight tensor.
     """
-    raise NotImplementedError
+    if initializer in ("uniform", "normal"):
+        if stddev is None or stddev <= 0:
+            raise ValueError("stddev must be provided for normal/uniform.")
+        if initializer == "uniform":
+            up_bound = float(np.sqrt(3.0) * stddev)
+            return np_uniform(-up_bound, up_bound, weight_shape)
+        return np_randn(weight_shape) * stddev
+
+    fan_in, fan_out = compute_fan_in_and_fan_out(weight_shape)
+    match mode:
+        case "fan_avg":
+            scale = (fan_in + fan_out) / 2.0
+        case "fan_in":
+            scale = fan_in
+        case "fan_out":
+            scale = fan_out
+        case _:
+            raise ValueError("Unknown mode.")
+
+    match initializer:
+        case "xavier_normal":
+            return np_randn(weight_shape) * np_float(np.sqrt(1.0 / scale))
+        case "xavier_uniform":
+            up_bound = float(np.sqrt(3.0 / scale))
+            return np_uniform(-up_bound, up_bound, weight_shape)
+        case "he_normal":
+            return np_randn(weight_shape) * np_float(np.sqrt(2.0 / scale))
+        case "he_uniform":
+            up_bound = float(np.sqrt(6.0 / scale))
+            return np_uniform(-up_bound, up_bound, weight_shape)
+        case _:
+            raise ValueError("Unknown initializer.")
 
 
 def generate_init_bias(
@@ -97,4 +135,15 @@ def generate_init_bias(
     Returns:
         np.ndarray: Initialized bias tensor.
     """
-    raise NotImplementedError
+    if initializer in ("zeros", "ones"):
+        if initializer == "ones":
+            return np_ones(bias_shape)
+        return np_zeros(bias_shape)
+
+    assert initializer in ("normal", "uniform")
+    if stddev is None or stddev <= 0:
+        raise ValueError("stddev must be provided for normal/uniform.")
+
+    if initializer == "uniform":
+        return np_uniform(-stddev, stddev, bias_shape)
+    return np_randn(bias_shape) * np_float(stddev)

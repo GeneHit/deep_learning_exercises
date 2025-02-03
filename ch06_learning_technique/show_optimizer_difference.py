@@ -7,6 +7,7 @@ from ch06_learning_technique.a_optimization import (
     AdaGrad,
     Adam,
     Momentum,
+    RMSProp,
 )
 from common.base import Optimizer
 from common.default_type_array import np_array, np_float
@@ -108,6 +109,7 @@ def compare_optimizers() -> None:
         "SGD": SGD(lr=0.95),
         "Momentum": Momentum(lr=0.1),
         "AdaGrad": AdaGrad(lr=1.5),
+        "RMSProp": RMSProp(lr=1.5),
         "Adam": Adam(lr=0.3),
     }
     show_optimizer_difference(optimizers, init_pos=(-7.0, 2.0), step=30)

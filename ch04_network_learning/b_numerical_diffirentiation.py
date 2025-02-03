@@ -2,6 +2,8 @@ from typing import Callable
 
 import numpy as np
 
+H = 1e-4
+
 
 def numerical_diff_1d(f: Callable[[float], float], x0: float) -> float:
     """Calculate numerical differentiation for a 1-dimensional function.
@@ -16,7 +18,7 @@ def numerical_diff_1d(f: Callable[[float], float], x0: float) -> float:
     Returns:
         float: Numerical differentiation.
     """
-    raise NotImplementedError
+    return (f(x0 + H) - f(x0 - H)) / (2 * H)
 
 
 def numerical_partial_diff(
@@ -40,4 +42,13 @@ def numerical_partial_diff(
     Returns:
         np.typing.NDArray[np.floating]: Numerical differentiation.
     """
-    raise NotImplementedError
+    origin_value = x0[axis]
+    # f(x0 - h)
+    x0[axis] -= H
+    f_x_minus_h = f(x0)
+    # f(x0 + h)
+    x0[axis] = origin_value + H
+    f_x_plus_h = f(x0)
+    # reset x0[axis] to original value
+    x0[axis] = origin_value
+    return (f_x_plus_h - f_x_minus_h) / (2 * H)

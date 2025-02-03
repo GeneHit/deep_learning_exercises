@@ -11,9 +11,10 @@ from typing import Callable
 
 import numpy as np
 from numpy.typing import NDArray
+from tqdm import tqdm
 
 from common.base import Layer, Optimizer, Trainer
-from common.default_type_array import np_float
+from common.default_type_array import np_float, np_ones
 
 WEIGHT_START_WITH = "W"
 
@@ -35,7 +36,10 @@ class Sequential(Layer):
         Note: this return a reference, the dict and the NDArray are mutable.
         It can be used for updating the parameters by outside -=, +=.
         """
-        raise NotImplementedError
+        params: dict[str, NDArray[np.floating]] = {}
+        for layer in self._layers:
+            params.update(layer.named_params())
+        return params
 
     def train(self, flag: bool) -> None:
         """Set the training flag for the network."""
@@ -44,13 +48,23 @@ class Sequential(Layer):
 
     def forward(self, x: NDArray[np.floating]) -> NDArray[np.floating]:
         """See the base class."""
-        raise NotImplementedError
+        y = x
+        for layer in self._layers:
+            y = layer.forward(y)
+        return y
 
     def backward(self, dout: NDArray[np.floating]) -> NDArray[np.floating]:
-        raise NotImplementedError
+        """See the base class."""
+        for layer in reversed(self._layers):
+            dout = layer.backward(dout)
+        return dout
 
     def param_grads(self) -> dict[str, NDArray[np.floating]]:
-        raise NotImplementedError
+        """Return the gradients of the parameters."""
+        grads: dict[str, NDArray[np.floating]] = {}
+        for layer in self._layers:
+            grads.update(layer.param_grads())
+        return grads
 
     def save_params(self, file_name: str) -> None:
         """Save the parameters to a file.
@@ -73,7 +87,7 @@ class LayerTraier(Trainer):
         network: Layer,
         loss: Layer,
         evaluation_fn: Callable[
-            [Layer, NDArray[np.floating], NDArray[np.floating]], float
+            [NDArray[np.floating], NDArray[np.floating]], float
         ],
         optimizer: Optimizer,
         x_train: NDArray[np.floating],
@@ -87,6 +101,7 @@ class LayerTraier(Trainer):
         evaluate_test_data: bool = True,
         evaluated_sample_per_epoch: int | None = None,
         verbose: bool = False,
+        name: str = "",
     ) -> None:
         """Initialize the trainer.
 
@@ -109,6 +124,8 @@ class LayerTraier(Trainer):
                 Number of epochs.
             mini_batch_size : int
                 Mini-batch size.
+            weight_decay_lambda : float | None
+                The lambda for the weight decay, using L2 regularization.
             evaluate_train_data : bool
                 If True, evaluate the training data.
             evaluate_test_data : bool
@@ -117,6 +134,8 @@ class LayerTraier(Trainer):
                 Number of samples to evaluate per epoch.
             verbose : bool
                 If True, print the training progress.
+            name : str
+                Name of the trainer, for process bar and logging.
         """
         self._network = network
         self._loss = loss
@@ -135,6 +154,7 @@ class LayerTraier(Trainer):
         self._evaluate_test_data = evaluate_test_data
         self._evaluated_sample_per_epoch = evaluated_sample_per_epoch
         self._verbose = verbose
+        self._name = name
 
         self._net_params = self._network.named_params()
         self._train_acc_history: list[float] = []
@@ -146,13 +166,15 @@ class LayerTraier(Trainer):
         self._test_acc_history = []
 
         self._network.train(True)
-        # TODO: use tqdm to show the progress
-        for epoch in range(self._epochs):
-            print(f"Epoch {epoch + 1}/{self._epochs}")
+        # tqdm progress bar for epochs
+        desc = self._name if self._name else "Training Progress"
+        epoch_bar = tqdm(range(self._epochs), desc=desc)
+        for epoch in epoch_bar:
             self._train_one_epoch()
 
             # output the necessary logging if necessary
             self._evaluate_if_necessary(epoch)
+        self._network.train(False)
 
     def get_final_accuracy(self) -> tuple[float, float]:
         """Get the final accuracy of the network after training.
@@ -171,9 +193,8 @@ class LayerTraier(Trainer):
                 and self._evaluated_sample_per_epoch is None
             ):
                 return self._test_acc_history[-1]
-            return self._evaluation_fn(
-                self._network, self._x_test, self._t_test
-            )
+            y = self._network.forward(self._x_test)
+            return self._evaluation_fn(y, self._t_test)
 
         def get_final_train_accuracy() -> float:
             if (
@@ -181,9 +202,8 @@ class LayerTraier(Trainer):
                 and self._evaluated_sample_per_epoch is None
             ):
                 return self._train_acc_history[-1]
-            return self._evaluation_fn(
-                self._network, self._x_train, self._t_train
-            )
+            y = self._network.forward(self._x_train)
+            return self._evaluation_fn(y, self._t_train)
 
         self._final_accuracy = (
             get_final_train_accuracy(),
@@ -209,13 +229,14 @@ class LayerTraier(Trainer):
                 x_train_sample = self._x_train[:num]
                 t_train_sample = self._t_train[:num]
 
-            train_accuracy = self._evaluation_fn(
-                self._network, x_train_sample, t_train_sample
-            )
+            y = self._network.forward(x_train_sample)
+            train_accuracy = self._evaluation_fn(y, t_train_sample)
             self._train_acc_history.append(train_accuracy)
             if self._verbose:
+                loss = self._loss.forward_to_loss(y, t_train_sample)
                 print(
-                    f"Train Accuracy at epoch {epoch + 1}: {train_accuracy:.4f}"
+                    f"Epoch {epoch + 1} Trainning: Acc {train_accuracy:.4f}; "
+                    f"Loss {loss:.4f}"
                 )
 
         # output the test accuracy if necessary
@@ -225,13 +246,14 @@ class LayerTraier(Trainer):
                 num = self._evaluated_sample_per_epoch
                 x_test_sample = self._x_test[:num]
                 t_test_sample = self._t_test[:num]
-            test_accuracy = self._evaluation_fn(
-                self._network, x_test_sample, t_test_sample
-            )
+            y = self._network.forward(x_test_sample)
+            test_accuracy = self._evaluation_fn(y, t_test_sample)
             self._test_acc_history.append(test_accuracy)
             if self._verbose:
+                loss = self._loss.forward_to_loss(y, t_test_sample)
                 print(
-                    f"Test Accuracy at epoch {epoch + 1}: {test_accuracy:.4f}"
+                    f"Epoch {epoch + 1} Test: Acc {test_accuracy:.4f}; "
+                    f"Loss {loss:.4f}"
                 )
 
         # set the network to the training mode
@@ -248,7 +270,33 @@ class LayerTraier(Trainer):
             - Get the gradient of the parameters (use weight decay if necessary)
             - Update the parameters once
         """
-        raise NotImplementedError
+        num_train = self._x_train.shape[0]
+        num_batch = num_train // self._mini_batch_size
+
+        for _ in range(num_batch):
+            selected_index = np.random.choice(num_train, self._mini_batch_size)
+            x_batch = self._x_train[selected_index]
+            t_batch = self._t_train[selected_index]
+
+            # forward
+            y = self._network.forward(x_batch)
+            loss = self._loss.forward_to_loss(y, t_batch)
+            if self._weight_decay_lambda:
+                weight_decay = _weight_square_sum(self._net_params)
+                loss += 0.5 * float(self._weight_decay_lambda * weight_decay)
+
+            # backward
+            dout = self._loss.backward(dout=np_ones(shape=(1, 1)))
+            self._network.backward(dout)
+
+            # get the gradient of the parameters
+            grads = self._network.param_grads()
+            _update_weight_decay_if_necessary(
+                grads, self._net_params, self._weight_decay_lambda
+            )
+
+            # update the parameters
+            self._optimizer.one_step(self._net_params, grads)
 
 
 def _weight_square_sum(params: dict[str, NDArray[np.floating]]) -> np.floating:

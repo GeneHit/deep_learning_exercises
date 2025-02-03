@@ -86,6 +86,6 @@ def softmax(
         np.ndarray of float: Output array after applying softmax function.
     """
     # Subtracting the maximum value ensures numerical stability.
-    exp_x = np.exp(x - np.max(x))
-    result: np.typing.NDArray[np.floating] = exp_x / np.sum(exp_x)  # for mypy
-    return result
+    exp_x: np.typing.NDArray[np.floating] = np.exp(x - np.max(x))
+    exp_x /= np.sum(exp_x)  # for mypy
+    return exp_x

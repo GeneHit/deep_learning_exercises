@@ -55,16 +55,10 @@ from common.base import Layer, LayerConfig
 
 
 @dataclass(frozen=True, kw_only=True)
-class AffineConfig(LayerConfig):
-    """Configuration for the Affine layer."""
+class ParameterInitConfig:
+    """Configuration for the parameter initialization."""
 
-    in_size: int
-    """The input size of the layer."""
-
-    out_size: int
-    """The output size of the layer."""
-
-    initializer: str = "he_normal"
+    initializer: str
     """The initializer for the weights of the layer.
 
     Options:
@@ -76,16 +70,19 @@ class AffineConfig(LayerConfig):
         - "uniform": Uniform distribution with weight_init_std.
     """
 
+    mode: str
+    """The mode for the initialization.
+
+    Options:
+        - "fan_in": The number of input units in the weight tensor.
+        - "fan_out": The number of output units in the weight tensor.
+        - "fan_avg": The average of the number of input and output units.
+    """
+
     weight_init_std: float | None = None
     """The standard deviation for the distribution of the weights.
 
     It is only used when the initializer is "normal" or "uniform".
-    """
-
-    param_suffix: str = ""
-    """The suffix for the layer's parameter, which should be unique.
-
-    The name of the parameter will be `W_{param_suffix}` and `b_{param_suffix}`.
     """
 
     def __post_init__(self) -> None:
@@ -94,6 +91,28 @@ class AffineConfig(LayerConfig):
             assert self.weight_init_std is not None, (
                 "The weight_init_std have to be provided for the initializer."
             )
+
+
+@dataclass(frozen=True, kw_only=True)
+class AffineConfig(LayerConfig):
+    """Configuration for the Affine layer."""
+
+    in_size: int
+    """The input size of the layer."""
+
+    out_size: int
+    """The output size of the layer."""
+
+    param_suffix: str
+    """The suffix for the layer's parameter, which should be unique.
+
+    The name of the parameter will be `W_{param_suffix}` and `b_{param_suffix}`.
+    """
+
+    param_init: ParameterInitConfig = ParameterInitConfig(
+        initializer="he_normal", mode="fan_in"
+    )
+    """The configuration for the parameter initialization."""
 
     def create(
         self, parameters: dict[str, NDArray[np.floating]] | None = None
@@ -107,14 +126,15 @@ class AffineConfig(LayerConfig):
         else:
             w = generate_init_weight(
                 weight_shape=(self.in_size, self.out_size),
-                initializer=self.initializer,
-                stddev=self.weight_init_std,
+                initializer=self.param_init.initializer,
+                mode=self.param_init.mode,
+                stddev=self.param_init.weight_init_std,
             )
             b = generate_init_bias(
-                bias_shape=(self.out_size,), initializer="zeros"
+                bias_shape=(1, self.out_size), initializer="zeros"
             )
 
-        return Affine(W=(w_name, w), b=(b_name, b))
+        return Affine(w=(w_name, w), b=(b_name, b))
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -147,6 +167,12 @@ class BatchNorm1dConfig(LayerConfig):
     num_feature: int
     """The number of features in the input tensor."""
 
+    param_suffix: str
+    """The suffix for the layer's parameter, which should be unique.
+
+    The name of the parameter will be `gamma_{param_suffix}` and `beta_{param_suffix}`.
+    """
+
     momentum: float = 0.9
     """The momentum for the moving average."""
 
@@ -159,40 +185,57 @@ class BatchNorm1dConfig(LayerConfig):
     eps: float = 1e-5
     """A small constant added to the denominator for numerical stability."""
 
-    param_suffix: str = ""
-    """The suffix for the layer's parameter, which should be unique.
-
-    The name of the parameter will be `gamma_{param_suffix}` and `beta_{param_suffix}`.
-    """
-
     def _get_params(
-        self, parameters: dict[str, NDArray[np.floating]] | None = None
+        self,
+        parameters: dict[str, NDArray[np.floating]] | None = None,
+        shape: tuple[int, ...] | None = None,
     ) -> tuple[
-        tuple[str, NDArray[np.floating]], tuple[str, NDArray[np.floating]]
+        tuple[str, NDArray[np.floating]],
+        tuple[str, NDArray[np.floating]],
+        tuple[str, NDArray[np.floating]],
+        tuple[str, NDArray[np.floating]],
     ]:
         gamma_name = f"gamma_{self.param_suffix}"
         beta_name = f"beta_{self.param_suffix}"
+        mean_name = f"running_mean_{self.param_suffix}"
+        var_name = f"running_var_{self.param_suffix}"
         if parameters is not None:
-            assert_keys_if_params_provided(parameters, [gamma_name, beta_name])
+            assert_keys_if_params_provided(
+                parameters, [gamma_name, beta_name, mean_name, var_name]
+            )
             gamma = parameters[gamma_name]
             beta = parameters[beta_name]
+            running_mean = parameters[mean_name]
+            running_var = parameters[var_name]
         else:
-            gamma = generate_init_bias(
-                bias_shape=(self.num_feature,), initializer="ones"
+            assert shape is not None, "The shape has to be provided."
+            gamma = generate_init_bias(bias_shape=shape, initializer="ones")
+            beta = generate_init_bias(bias_shape=shape, initializer="zeros")
+            running_mean = generate_init_bias(
+                bias_shape=shape, initializer="zeros"
             )
-            beta = generate_init_bias(
-                bias_shape=(self.num_feature,), initializer="zeros"
+            running_var = generate_init_bias(
+                bias_shape=shape, initializer="ones"
             )
 
-        return (gamma_name, gamma), (beta_name, beta)
+        return (
+            (gamma_name, gamma),
+            (beta_name, beta),
+            (mean_name, running_mean),
+            (var_name, running_var),
+        )
 
     def create(
         self, parameters: dict[str, NDArray[np.floating]] | None = None
     ) -> Layer:
-        gamma, beta = self._get_params(parameters)
+        gamma, beta, mean, var = self._get_params(
+            parameters, shape=(1, self.num_feature)
+        )
         return BatchNorm1d(
             gamma=gamma,
             beta=beta,
+            running_mean=mean,
+            running_var=var,
             momentum=self.momentum,
             affine=self.affine,
             track_running_stats=self.track_running_stats,
@@ -207,10 +250,14 @@ class BatchNorm2dConfig(BatchNorm1dConfig):
     def create(
         self, parameters: dict[str, NDArray[np.floating]] | None = None
     ) -> Layer:
-        gamma, beta = self._get_params(parameters)
+        gamma, beta, mean, var = self._get_params(
+            parameters, shape=(1, self.num_feature, 1, 1)
+        )
         return BatchNorm2d(
             gamma=gamma,
             beta=beta,
+            running_mean=mean,
+            running_var=var,
             momentum=self.momentum,
             affine=self.affine,
             track_running_stats=self.track_running_stats,
@@ -228,6 +275,12 @@ class Conv2dConfig(LayerConfig):
     out_channels: int
     """The number of output channels."""
 
+    param_suffix: str
+    """The suffix for the layer's parameter, which should be unique.
+
+    The name of the parameter will be `W_{param_suffix}` and `b_{param_suffix}`.
+    """
+
     kernel_size: tuple[int, int]
     """The size of the kernel."""
 
@@ -237,36 +290,9 @@ class Conv2dConfig(LayerConfig):
     pad: int = 0
     """The padding size."""
 
-    initializer: str = "he_normal"
-    """The initializer for the weights of the layer.
-
-    Options:
-        - "he_normal": He normal initializer.
-        - "he_uniform": He uniform initializer.
-        - "xavier_normal": Xavier normal initializer.
-        - "xavier_uniform": Xavier uniform initializer.
-        - "normal": Normal distribution with weight_init_std.
-        - "uniform": Uniform distribution with weight_init_std.
-    """
-
-    weight_init_std: float | None = None
-    """The standard deviation for the distribution of the weights.
-
-    It is only used when the initializer is "normal" or "uniform".
-    """
-
-    param_suffix: str = ""
-    """The suffix for the layer's parameter, which should be unique.
-
-    The name of the parameter will be `W_{param_suffix}` and `b_{param_suffix}`.
-    """
-
-    def __post_init__(self) -> None:
-        # checker
-        if self.initializer in {"normal", "uniform"}:
-            assert self.weight_init_std is not None, (
-                "The weight_init_std have to be provided for the initializer."
-            )
+    param_init: ParameterInitConfig = ParameterInitConfig(
+        initializer="he_normal", mode="fan_in", weight_init_std=None
+    )
 
     def create(
         self, parameters: dict[str, NDArray[np.floating]] | None = None
@@ -284,8 +310,9 @@ class Conv2dConfig(LayerConfig):
                     self.in_channels,
                     *self.kernel_size,
                 ),
-                initializer=self.initializer,
-                stddev=self.weight_init_std,
+                initializer=self.param_init.initializer,
+                mode=self.param_init.mode,
+                stddev=self.param_init.weight_init_std,
             )
             b = generate_init_bias(
                 bias_shape=(self.out_channels,),
