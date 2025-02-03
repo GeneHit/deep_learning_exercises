@@ -114,6 +114,7 @@ def load_mnist(
             If True, flatten the images to 1D arrays. If False, reshape the images to 28x28. Default is True.
         one_hot_label : bool
             If True, convert labels to one-hot encoding. Default is False.
+            # one hot means the label is one hot encoded like [0, 0, 1, 0, 0].
 
     Returns:
         tuple: A tuple containing two tuples:
@@ -139,9 +140,12 @@ def load_mnist(
         for key in ("train_img", "test_img"):
             dataset[key] = dataset[key].reshape(-1, 1, 28, 28)
 
-    return (dataset["train_img"], dataset["train_label"]), (
-        dataset["test_img"],
-        dataset["test_label"],
+    return (
+        dataset["train_img"].astype(get_default_type()),
+        dataset["train_label"].astype(DEFAULT_INT_TYPE),
+    ), (
+        dataset["test_img"].astype(get_default_type()),
+        dataset["test_label"].astype(DEFAULT_INT_TYPE),
     )
 
 

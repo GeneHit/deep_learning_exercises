@@ -21,7 +21,6 @@ def test_simple_cnn() -> None:
     # verifying the correctness of the code.
     # x_train = x_train[:5000]
     # t_train = t_train[:5000]
-
     epochs = 20
 
     # Initializing the network:
@@ -40,11 +39,9 @@ def test_simple_cnn() -> None:
             ReLUConfig(),
             MaxPool2dConfig(kernel_size=(2, 2), stride=2),
             FlattenConfig(),
-            AffineConfig(
-                in_size=30 * 12 * 12, out_size=100, initializer="he_normal"
-            ),
+            AffineConfig(in_size=30 * 12 * 12, out_size=100, param_suffix="2"),
             ReLUConfig(),
-            AffineConfig(in_size=100, out_size=10, initializer="he_normal"),
+            AffineConfig(in_size=100, out_size=10, param_suffix="3"),
         ),
     )
     network = config.create()

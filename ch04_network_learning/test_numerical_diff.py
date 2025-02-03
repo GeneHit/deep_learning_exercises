@@ -45,42 +45,47 @@ def test_numerical_diff_1d(
     "f, x, axis, expected",
     [
         # linear function with 1-d variable
-        (lambda x: np.sum(x), np.array([1.0, 2.0]), np.array([1.0, 1.0])),
+        (lambda x: np.sum(x), np.array([1.0, 2.0]), (1,), 1.0),
         # Quadratic function with 1-d variable
-        (lambda x: np.sum(x**2), np.array([3.0, 4.0]), np.array([6.0, 8.0])),
+        (lambda x: np.sum(x**2), np.array([3.0, 4.0]), (1,), 8.0),
         # Cubic function with 1-d variable
-        (lambda x: np.sum(x**3), np.array([2.0, 3.0]), np.array([12.0, 27.0])),
+        (lambda x: np.sum(x**3), np.array([2.0, 3.0]), (0,), 12.0),
         # Quadratic function with 2-d variable
         (
             lambda x: np.sum(x**2),
             np.array([[1.0, 2.0], [3.0, 4.0]]),
-            np.array([[2.0, 4.0], [6.0, 8.0]]),
+            (0, 1),
+            4.0,
         ),
         # Multiplication function with 1-d variable
-        (lambda x: x[0] * x[1], np.array([2.0, 3.0]), np.array([3.0, 2.0])),
+        (lambda x: x[0] * x[1], np.array([2.0, 3.0]), (0,), 3.0),
         # Sine and Cosine function with 1-d variable
         (
             lambda x: np.sin(x[0]) + np.cos(x[1]),
             np.array([np.pi / 4, np.pi / 3]),
-            np.array([np.cos(np.pi / 4), -np.sin(np.pi / 3)]),
+            (0,),
+            np.cos(np.pi / 4),
         ),
         # Exponential and Logarithmic function with 1-d variable
         (
             lambda x: np.exp(x[0]) + np.log(x[1]),
             np.array([1.0, 2.0]),
-            np.array([np.exp(1.0), 1 / 2.0]),
+            (0,),
+            np.exp(1.0),
         ),
         # Tangent and Reciprocal function with 1-d variable
         (
             lambda x: np.tan(x[0]) + 1 / x[1],
             np.array([np.pi / 6, 1.0]),
-            np.array([1 / (np.cos(np.pi / 6) ** 2), -1.0]),
+            (1,),
+            -1.0,
         ),
         # Square root function with 1-d variable
         (
             lambda x: np.sqrt(x[0]) + x[1] ** 0.5,
             np.array([4.0, 9.0]),
-            np.array([1 / (2 * np.sqrt(4.0)), 1 / (2 * np.sqrt(9.0))]),
+            (0,),
+            1 / (2 * np.sqrt(4.0)),
         ),
     ],
 )

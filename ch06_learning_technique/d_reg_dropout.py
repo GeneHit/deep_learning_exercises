@@ -12,8 +12,13 @@ class Dropout(Layer):
     This is a kind of regularization technique.
     """
 
-    def __init__(self, dropout_ratio: float = 0.5) -> None:
+    def __init__(
+        self, dropout_ratio: float = 0.5, inplace: bool = False
+    ) -> None:
         self._dropout_ratio = np_float(dropout_ratio)
+        self._inplace = inplace
+        self._training = False
+        self._mask: NDArray[np.bool] | None = None
 
     def named_params(self) -> dict[str, NDArray[np.floating]]:
         """See the base class."""
@@ -24,7 +29,10 @@ class Dropout(Layer):
         raise NotImplementedError
 
     def forward(self, x: NDArray[np.floating]) -> NDArray[np.floating]:
-        """Forward pass of the dropout layer."""
+        """Forward pass of the dropout layer.
+
+        There are standard and scale-invert dropout.
+        """
         raise NotImplementedError
 
     def backward(self, dout: NDArray[np.floating]) -> NDArray[np.floating]:
@@ -63,6 +71,8 @@ class Dropout2d(Layer):
         """
         self._dropout_ratio = np_float(dropout_ratio)
         self._inplace = inplace
+        self._training = False
+        self._mask: NDArray[np.bool] | None = None
 
     def named_params(self) -> dict[str, NDArray[np.floating]]:
         """See the base class."""

@@ -15,14 +15,14 @@ class Simple3LayerNN:
 
     Explanation:
     - Input Layer:
-        - Nodes: x1, x2
+        - 2 Nodes: x1, x2
         - Fully connected to all nodes in Hidden Layer 1.
     - Hidden Layer 1:
-        - Three nodes, fully connected to Input Layer and Hidden Layer 2.
+        - 3 nodes, fully connected to Input Layer and Hidden Layer 2.
     - Hidden Layer 2:
-        - Two nodes, fully connected to Hidden Layer 1 and Output Layer.
+        - 2 nodes, fully connected to Hidden Layer 1 and Output Layer.
     - Output Layer:
-        - Two nodes: y1, y2.
+        - 2 nodes: y1, y2.
         - Fully connected to Hidden Layer 2.
 
     This network is fully connected and feedforward.

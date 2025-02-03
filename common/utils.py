@@ -1,5 +1,37 @@
+import time
+from contextlib import contextmanager
+from typing import Iterator
+
 from common.base import Layer
 from common.default_type_array import get_default_type
+
+
+@contextmanager
+def log_duration(process: str) -> Iterator[None]:
+    """Log duration of some processes.
+
+    Parameters
+    ----------
+    process : str
+        Describe the process with lowercase letters, numbers, or underscores.
+
+    Raises
+    ------
+    ValueError
+        If `process` is empty.
+    """
+    if process == "":
+        raise ValueError("The process description cannot be empty.")
+
+    start_time = time.time()
+    try:
+        yield
+    finally:
+        end_time = time.time()
+        print(
+            f"{process}_duration_s: {end_time - start_time:.1f}. "
+            f"start_time_s: {start_time:.4f}; end_time_s: {end_time:.4f}."
+        )
 
 
 def assert_layer_parameter_type(layer: Layer) -> None:
