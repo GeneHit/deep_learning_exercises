@@ -29,7 +29,10 @@ class Dropout(Layer):
         self._training = flag
 
     def forward(self, x: NDArray[np.floating]) -> NDArray[np.floating]:
-        """Forward pass of the dropout layer."""
+        """Forward pass of the dropout layer.
+
+        There are standard and scale-invert dropout.
+        """
         # use scale-invert dropout
         if not self._training:
             return x

@@ -74,6 +74,8 @@ def softmax(
 
     The softmax function is defined as:
         softmax(x) = exp(x) / sum(exp(x))
+    Notice:
+        Subtracting the maximum value ensures numerical stability.
 
     The sum is calculated over all elements in the input array, ensuring that the output
     values are normalized and sum to 1. This makes the softmax function particularly useful

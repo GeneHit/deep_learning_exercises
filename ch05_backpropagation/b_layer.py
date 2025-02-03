@@ -2,7 +2,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from ch04_network_learning.a_loss_function import (
-    cross_entropy_error_single_lable,
+    cross_entropy_error_single_label,
 )
 from common.base import Layer
 from common.default_type_array import np_float, np_ones
@@ -30,7 +30,6 @@ class ReLU(Layer):
                 if the input is reused elsewhere.
         """
         self._inplace = inplace
-        # self._mask: NDArray[np.bool_] | None = None
         self._x: NDArray[np.floating] | None = None
 
     def named_params(self) -> dict[str, NDArray[np.floating]]:
@@ -237,7 +236,7 @@ class SoftmaxWithLoss(Layer):
         """
         self._y = self.forward(x)
         self._t = t
-        return cross_entropy_error_single_lable(self._y, t)
+        return cross_entropy_error_single_label(self._y, t)
 
     def backward(
         self, dout: NDArray[np.floating] = np_ones(shape=(1,))
