@@ -286,16 +286,19 @@ class LayerTraier(Trainer):
                 loss += 0.5 * float(self._weight_decay_lambda * weight_decay)
 
             # backward
+            # print("111111111111111111111111")
             dout = self._loss.backward(dout=np_ones(shape=(1, 1)))
             self._network.backward(dout)
 
             # get the gradient of the parameters
+            # print("2222222222222222222222222")
             grads = self._network.param_grads()
             _update_weight_decay_if_necessary(
                 grads, self._net_params, self._weight_decay_lambda
             )
 
             # update the parameters
+            # print("3333333333333333333333333")
             self._optimizer.one_step(self._net_params, grads)
 
 

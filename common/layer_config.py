@@ -320,7 +320,7 @@ class Conv2dConfig(LayerConfig):
             )
 
         return Conv2d(
-            W=(w_name, w), b=(b_name, b), stride=self.stride, pad=self.pad
+            w=(w_name, w), b=(b_name, b), stride=self.stride, pad=self.pad
         )
 
 
