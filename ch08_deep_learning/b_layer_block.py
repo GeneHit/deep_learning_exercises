@@ -196,7 +196,7 @@ class ResBlock(Layer):
 
     def train(self, flag: bool) -> None:
         """Set the training flag of the layer."""
-        # the ReLU is not necesasry to call train
+        # the ReLU is not necessary to call train
         for layer in self._first_5_layers + self._shortcut:
             layer.train(flag)
 
