@@ -19,8 +19,8 @@ def test_simple_cnn() -> None:
     (x_train, t_train), (x_test, t_test) = load_mnist(flatten=False)
     # Reduce the dataset size to speed up the test, so that run the test for
     # verifying the correctness of the code.
-    # x_train = x_train[:5000]
-    # t_train = t_train[:5000]
+    x_train = x_train[:5000]
+    t_train = t_train[:5000]
     epochs = 20
 
     # Initializing the network:
@@ -56,13 +56,14 @@ def test_simple_cnn() -> None:
         x_test=x_test,
         t_test=t_test,
         epochs=epochs,
-        mini_batch_size=100,
+        mini_batch_size=99,
+        evaluate_train_data=False,
         evaluate_test_data=False,
     )
 
     trainer.train()
 
     assert_layer_parameter_type(network)
-    train_acc_list, test_acc_list = trainer.get_history_accuracy()
-    assert train_acc_list[-1] >= 0.98
-    assert test_acc_list[-1] >= 0.95
+    train_acc_list, test_acc_list = trainer.get_final_accuracy()
+    assert train_acc_list >= 0.98
+    assert test_acc_list >= 0.95

@@ -15,6 +15,7 @@ class Dropout(Layer):
     def __init__(
         self, dropout_ratio: float = 0.5, inplace: bool = False
     ) -> None:
+        assert 0 <= dropout_ratio < 1.0
         self._dropout_ratio = np_float(dropout_ratio)
         self._inplace = inplace
         self._training = False
@@ -69,6 +70,7 @@ class Dropout2d(Layer):
                 data directly, which may lead to unintended side effects
                 if the input is reused elsewhere.
         """
+        assert 0 <= dropout_ratio < 1.0
         self._dropout_ratio = np_float(dropout_ratio)
         self._inplace = inplace
         self._training = False

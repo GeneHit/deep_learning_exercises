@@ -5,7 +5,7 @@ from common.base import Layer
 
 
 class MaxPool2d(Layer):
-    """Max pooling layer.
+    """Max 2D pooling layer.
 
     Pooling operations, whether 2D or 3D, are applied independently to
     each channel of the input data. This means that the pooling operation
@@ -42,6 +42,8 @@ class MaxPool2d(Layer):
 
     def forward(self, x: NDArray[np.floating]) -> NDArray[np.floating]:
         """Forward pass of the layer.
+
+        Tips: can use the im2col to have a col and then apply the max operation.
 
         Parameters:
             x: NDArray[np.floating]
@@ -94,6 +96,8 @@ class AvgPool2d(Layer):
 
     def forward(self, x: NDArray[np.floating]) -> NDArray[np.floating]:
         """Forward pass of the layer.
+
+        Tips: can use the im2col to have a col and then apply the avg operation.
 
         Parameters:
             x: NDArray[np.floating]
