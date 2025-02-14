@@ -1,4 +1,14 @@
-from common.layer_config import SequentialConfig
+from common.layer_config import (
+    AffineConfig,
+    BatchNorm2dConfig,
+    Conv2dConfig,
+    Conv2dGroupConfig,
+    DropoutConfig,
+    FlattenConfig,
+    MaxPool2dConfig,
+    ReLUConfig,
+    SequentialConfig,
+)
 
 
 def le_net_config() -> SequentialConfig:
@@ -49,7 +59,36 @@ def le_net_config() -> SequentialConfig:
             - Activation: Softmax
             - Output: (10,)
     """
-    raise NotImplementedError
+    return SequentialConfig(
+        hidden_layer_configs=(
+            Conv2dConfig(
+                in_channels=1,
+                out_channels=6,
+                param_suffix="1",
+                kernel_size=(5, 5),
+                stride=1,
+                pad=0,
+            ),
+            ReLUConfig(),
+            MaxPool2dConfig(kernel_size=(2, 2), stride=2, pad=0),
+            Conv2dConfig(
+                in_channels=6,
+                out_channels=16,
+                param_suffix="2",
+                kernel_size=(5, 5),
+                stride=1,
+                pad=0,
+            ),
+            ReLUConfig(),
+            MaxPool2dConfig(kernel_size=(2, 2), stride=2, pad=0),
+            FlattenConfig(),
+            AffineConfig(in_size=16 * 4 * 4, out_size=120, param_suffix="3"),
+            ReLUConfig(),
+            AffineConfig(in_size=120, out_size=84, param_suffix="4"),
+            ReLUConfig(),
+            AffineConfig(in_size=84, out_size=10, param_suffix="5"),
+        )
+    )
 
 
 def alex_net_config() -> SequentialConfig:
@@ -82,7 +121,7 @@ def alex_net_config() -> SequentialConfig:
         - Kernel size: 5x5
         - Stride: 1
         - Padding: 2
-        - Groups: 2 (split across GPUs in original paper)
+        - Groups: 2 (split across GPUs in original paper) ()
         - Output: 27x27x256
         - Activation: ReLU
     6. Norm2: BatchNorm (original paper used Local Response Normalization)
@@ -134,4 +173,68 @@ def alex_net_config() -> SequentialConfig:
         - Neurons: 1000 (number of classes in ImageNet)
         - Activation: Softmax
     """
-    raise NotImplementedError
+    return SequentialConfig(
+        hidden_layer_configs=(
+            Conv2dConfig(
+                in_channels=1,
+                out_channels=96,
+                param_suffix="1",
+                kernel_size=(11, 11),
+                stride=4,
+                pad=0,
+            ),
+            ReLUConfig(),
+            BatchNorm2dConfig(num_feature=96, param_suffix="1", momentum=0.9),
+            MaxPool2dConfig(kernel_size=(3, 3), stride=2, pad=0),
+            Conv2dGroupConfig(
+                in_channels=96,
+                out_channels=256,
+                group=2,
+                param_suffix="2",
+                kernel_size=(5, 5),
+                stride=1,
+                pad=2,
+            ),
+            ReLUConfig(),
+            BatchNorm2dConfig(num_feature=256, param_suffix="2", momentum=0.9),
+            MaxPool2dConfig(kernel_size=(3, 3), stride=2, pad=0),
+            Conv2dConfig(
+                in_channels=256,
+                out_channels=384,
+                param_suffix="3",
+                kernel_size=(3, 3),
+                stride=1,
+                pad=1,
+            ),
+            ReLUConfig(),
+            Conv2dGroupConfig(
+                in_channels=384,
+                out_channels=384,
+                group=2,
+                param_suffix="4",
+                kernel_size=(3, 3),
+                stride=1,
+                pad=1,
+            ),
+            ReLUConfig(),
+            Conv2dGroupConfig(
+                in_channels=384,
+                out_channels=256,
+                group=2,
+                param_suffix="5",
+                kernel_size=(3, 3),
+                stride=1,
+                pad=1,
+            ),
+            ReLUConfig(),
+            MaxPool2dConfig(kernel_size=(3, 3), stride=2, pad=0),
+            FlattenConfig(),
+            AffineConfig(in_size=256 * 6 * 6, out_size=4096, param_suffix="6"),
+            ReLUConfig(),
+            DropoutConfig(dropout_ratio=0.5),
+            AffineConfig(in_size=4096, out_size=4096, param_suffix="7"),
+            ReLUConfig(),
+            DropoutConfig(dropout_ratio=0.5),
+            AffineConfig(in_size=4096, out_size=1000, param_suffix="8"),
+        )
+    )

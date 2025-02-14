@@ -1,125 +1,14 @@
-import numpy as np
-from numpy.typing import NDArray
-
-from common.base import Layer
-from common.layer_config import SequentialConfig
-
-
-class ResBlock(Layer):
-    """Basic residual block used in shallow ResNet architectures.
-
-    This block consists of two convolutional layers with a skip connection,
-    enabling the network to learn residual functions.
-
-    Diagram:
-        input -> Conv1 (3x3) -> BatchNorm -> ReLU ->
-                Conv2 (3x3) -> BatchNorm -> + -> ReLU -> output
-          |_________________________________|
-
-    Each convolutional layer is followed by Batch Normalization (`BatchNorm`)
-    before applying ReLU activation. The skip connection adds the original
-    input to the transformed output before the final activation.
-
-    **Use Cases:**
-        - Used in **shallower ResNet architectures** such as **ResNet-18 and ResNet-34**.
-        - Suitable for **smaller datasets** or when computational efficiency is a priority.
-        - Preferred when working with **low to medium depth networks**.
-        - Used when model depth is **not too deep**, so no need for a bottleneck structure.
-
-    Attributes:
-        conv1 (Conv2D): 3x3 convolution for feature extraction.
-        bn1 (BatchNorm2D): Batch Normalization for conv1.
-        conv2 (Conv2D): 3x3 convolution for feature extraction.
-        bn2 (BatchNorm2D): Batch Normalization for conv2.
-        shortcut (Sequential or Identity): Skip connection for residual learning.
-        relu (ReLU): Activation function applied after convolutions.
-    """
-
-    def named_params(self) -> dict[str, NDArray[np.floating]]:
-        """Return the parameters of the network."""
-        raise NotImplementedError
-
-    def train(self, flag: bool) -> None:
-        """Set the training flag of the layer."""
-        raise NotImplementedError
-
-    def forward(self, x: NDArray[np.floating]) -> NDArray[np.floating]:
-        """Forward pass of the layer."""
-        raise NotImplementedError
-
-    def backward(self, dout: NDArray[np.floating]) -> NDArray[np.floating]:
-        """Backward pass of the layer."""
-        raise NotImplementedError
-
-    def param_grads(self) -> dict[str, NDArray[np.floating]]:
-        """Return the gradients of the parameters.
-
-        This have to be called after the backward pass.
-        """
-        raise NotImplementedError
-
-
-class ResBottleneckBlock(Layer):
-    """Bottleneck block used in deep ResNet architectures.
-
-    This block consists of three convolutional layers with a skip connection.
-    It follows the bottleneck design to reduce computation while maintaining
-    performance.
-
-    Diagram:
-        input -> Conv1 (1x1, reduce channels) -> BatchNorm -> ReLU ->
-                Conv2 (3x3, main conv) -> BatchNorm -> ReLU ->
-                Conv3 (1x1, restore channels) -> BatchNorm -> + -> ReLU -> output
-          |___________________________________________________|
-
-    The first 1x1 convolution reduces dimensionality,
-    the 3x3 convolution performs the main feature extraction,
-    and the final 1x1 convolution restores the original channel size.
-    Batch Normalization (`BatchNorm`) is applied after each convolution
-    before ReLU activation to stabilize training and improve performance.
-
-    The skip connection adds the original input to the transformed output
-    before applying the final ReLU activation.
-
-    **Use Cases:**
-        - Used in **deeper ResNet architectures** such as **ResNet-50, ResNet-101, and ResNet-152**.
-        - Suitable for **large-scale image classification** tasks (e.g., ImageNet).
-        - Helps **reduce computational cost** while maintaining high model capacity.
-        - Preferred when working with **deep neural networks** where efficiency is critical.
-
-    Attributes:
-        conv1 (Conv2D): 1x1 convolution to reduce the number of channels.
-        bn1 (BatchNorm2D): Batch Normalization for conv1.
-        conv2 (Conv2D): 3x3 convolution for main feature extraction.
-        bn2 (BatchNorm2D): Batch Normalization for conv2.
-        conv3 (Conv2D): 1x1 convolution to restore the number of channels.
-        bn3 (BatchNorm2D): Batch Normalization for conv3.
-        shortcut (Sequential or Identity): Skip connection for residual learning.
-        relu (ReLU): Activation function applied after each convolution.
-    """
-
-    def named_params(self) -> dict[str, NDArray[np.floating]]:
-        """Return the parameters of the network."""
-        raise NotImplementedError
-
-    def train(self, flag: bool) -> None:
-        """Set the training flag of the layer."""
-        raise NotImplementedError
-
-    def forward(self, x: NDArray[np.floating]) -> NDArray[np.floating]:
-        """Forward pass of the layer."""
-        raise NotImplementedError
-
-    def backward(self, dout: NDArray[np.floating]) -> NDArray[np.floating]:
-        """Backward pass of the layer."""
-        raise NotImplementedError
-
-    def param_grads(self) -> dict[str, NDArray[np.floating]]:
-        """Return the gradients of the parameters.
-
-        This have to be called after the backward pass.
-        """
-        raise NotImplementedError
+from common.layer_config import (
+    AffineConfig,
+    BottleneckBlocksConfig,
+    Conv2dConfig,
+    FlattenConfig,
+    GlobalAvgPoolingConfig,
+    MaxPool2dConfig,
+    ReLUConfig,
+    ResBlocksConfig,
+    SequentialConfig,
+)
 
 
 def res_net_18_config() -> SequentialConfig:
@@ -170,7 +59,51 @@ def res_net_18_config() -> SequentialConfig:
         - Neurons: 1000 (number of classes in ImageNet)
         - Activation: Softmax
     """
-    raise NotImplementedError
+    return SequentialConfig(
+        hidden_layer_configs=(
+            Conv2dConfig(
+                in_channels=3,
+                out_channels=64,
+                param_suffix="1",
+                kernel_size=(7, 7),
+                stride=2,
+                pad=3,
+            ),
+            ReLUConfig(),
+            MaxPool2dConfig(kernel_size=(3, 3), stride=2, pad=0),
+            ResBlocksConfig(
+                in_channel=64,
+                out_channel=64,
+                stride=1,
+                layer=2,
+                param_suffix="2",
+            ),
+            ResBlocksConfig(
+                in_channel=64,
+                out_channel=128,
+                stride=2,
+                layer=2,
+                param_suffix="3",
+            ),
+            ResBlocksConfig(
+                in_channel=128,
+                out_channel=256,
+                stride=2,
+                layer=2,
+                param_suffix="4",
+            ),
+            ResBlocksConfig(
+                in_channel=256,
+                out_channel=512,
+                stride=2,
+                layer=2,
+                param_suffix="5",
+            ),
+            GlobalAvgPoolingConfig(),
+            FlattenConfig(),
+            AffineConfig(in_size=512, out_size=1000, param_suffix="6"),
+        )
+    )
 
 
 def res_net_50_config() -> SequentialConfig:
@@ -225,4 +158,56 @@ def res_net_50_config() -> SequentialConfig:
         - Neurons: 1000 (number of classes in ImageNet)
         - Activation: Softmax
     """
-    raise NotImplementedError
+    return SequentialConfig(
+        hidden_layer_configs=(
+            Conv2dConfig(
+                in_channels=3,
+                out_channels=64,
+                param_suffix="1",
+                kernel_size=(7, 7),
+                stride=2,
+                pad=3,
+            ),
+            ReLUConfig(),
+            MaxPool2dConfig(kernel_size=(3, 3), stride=2, pad=0),
+            BottleneckBlocksConfig(
+                in_channel=64,
+                bottle_channel=64,
+                out_channel=256,
+                stride=1,
+                layer=3,
+                param_suffix="2",
+            ),
+            # 56x56 -> 28x28
+            BottleneckBlocksConfig(
+                in_channel=256,
+                bottle_channel=128,
+                out_channel=512,
+                stride=2,
+                layer=4,
+                param_suffix="3",
+            ),
+            # 28x28 -> 14x14
+            BottleneckBlocksConfig(
+                in_channel=512,
+                bottle_channel=256,
+                out_channel=1024,
+                stride=2,
+                layer=6,
+                param_suffix="4",
+            ),
+            # 14x14 -> 7x7
+            BottleneckBlocksConfig(
+                in_channel=1024,
+                bottle_channel=512,
+                out_channel=2048,
+                stride=2,
+                layer=3,
+                param_suffix="5",
+            ),
+            # 7x7 -> 1x1
+            GlobalAvgPoolingConfig(),
+            FlattenConfig(),
+            AffineConfig(in_size=512, out_size=1000, param_suffix="6"),
+        )
+    )

@@ -1,4 +1,12 @@
-from common.layer_config import SequentialConfig
+from common.layer_config import (
+    AffineConfig,
+    Conv2dConfig,
+    DropoutConfig,
+    FlattenConfig,
+    MaxPool2dConfig,
+    ReLUConfig,
+    SequentialConfig,
+)
 
 
 def deep_2d_net_config() -> SequentialConfig:
@@ -86,4 +94,70 @@ def deep_2d_net_config() -> SequentialConfig:
         layer 12: Dropout Layer
             - Dropout ratio: 0.5
     """
-    raise NotImplementedError
+    return SequentialConfig(
+        hidden_layer_configs=(
+            Conv2dConfig(
+                in_channels=1,
+                out_channels=16,
+                param_suffix="1",
+                kernel_size=(3, 3),
+                stride=1,
+                pad=1,
+            ),
+            ReLUConfig(),
+            Conv2dConfig(
+                in_channels=16,
+                out_channels=16,
+                param_suffix="2",
+                kernel_size=(3, 3),
+                stride=1,
+                pad=1,
+            ),
+            ReLUConfig(),
+            MaxPool2dConfig(kernel_size=(2, 2), stride=2, pad=0),
+            Conv2dConfig(
+                in_channels=16,
+                out_channels=32,
+                param_suffix="3",
+                kernel_size=(3, 3),
+                stride=1,
+                pad=1,
+            ),
+            ReLUConfig(),
+            Conv2dConfig(
+                in_channels=32,
+                out_channels=32,
+                param_suffix="4",
+                kernel_size=(3, 3),
+                stride=1,
+                pad=1,
+            ),
+            ReLUConfig(),
+            MaxPool2dConfig(kernel_size=(2, 2), stride=2, pad=0),
+            Conv2dConfig(
+                in_channels=32,
+                out_channels=64,
+                param_suffix="5",
+                kernel_size=(3, 3),
+                stride=1,
+                pad=1,
+            ),
+            ReLUConfig(),
+            Conv2dConfig(
+                in_channels=64,
+                out_channels=64,
+                param_suffix="6",
+                kernel_size=(3, 3),
+                stride=1,
+                pad=1,
+            ),
+            ReLUConfig(),
+            MaxPool2dConfig(kernel_size=(2, 2), stride=2, pad=0),
+            FlattenConfig(),
+            AffineConfig(in_size=64 * 3 * 3, out_size=50, param_suffix="7"),
+            ReLUConfig(),
+            DropoutConfig(dropout_ratio=0.5),
+            AffineConfig(in_size=50, out_size=10, param_suffix="8"),
+            DropoutConfig(dropout_ratio=0.5),
+        )
+    )

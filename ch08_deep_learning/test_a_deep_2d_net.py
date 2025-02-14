@@ -1,4 +1,3 @@
-import time
 from typing import TypeAlias
 
 from ch06_learning_technique.a_optimization import Adam
@@ -18,23 +17,34 @@ from dataset.mnist import load_mnist
 def test_deep_conv_net() -> None:
     # set save_params to True to save the parameters
     train_and_test_deep_conv_net(
-        net_config=deep_2d_net_config(), save_params=False
+        net_config=deep_2d_net_config(),
+        data_num_for_train=5000,
     )
 
 
 def train_and_test_deep_conv_net(
     net_config: SequentialConfig,
     augmente_data: bool = False,
+    augmentation_factor: float = 1.1,
     save_params: bool = False,
     target_float_dtype: TypeAlias = get_default_type(),
+    data_num_for_train: int | None = None,
 ) -> None:
+    set_default_type(target_float_dtype)
     (x_train, t_train), (x_test, t_test) = load_mnist(flatten=False)
+    target_acc = 0.99
+    if data_num_for_train is not None:
+        # use a small data for faster verification.
+        x_train = x_train[:data_num_for_train]
+        t_train = t_train[:data_num_for_train]
+        target_acc = 0.9
+
     if augmente_data:
+        print("augmenting mnist data ...")
         x_train, t_train = augment_mnist_data(
-            x_train, t_train, augmentation_factor=1.5
+            x_train, t_train, augmentation_factor
         )
 
-    set_default_type(target_float_dtype)
     network = net_config.create()
     optimizer = Adam(lr=0.001)
     trainer = LayerTraier(
@@ -51,20 +61,14 @@ def train_and_test_deep_conv_net(
         evaluated_sample_per_epoch=1000,
     )
 
-    start_time = time.time()
-
     trainer.train()
 
-    duration = time.time() - start_time
-    print(f"Training duration: {duration:.2f} seconds")
-
     assert_layer_parameter_type(network)
-
     # Check the final accuracy
     train_acc, test_acc = trainer.get_final_accuracy()
     print(f"train acc, test acc | {train_acc:.4f}, {test_acc:.4f}")
-    assert train_acc >= 0.99
-    assert test_acc >= 0.99
+    assert train_acc >= target_acc
+    assert test_acc >= target_acc
 
     if save_params:
         assert isinstance(network, Sequential)  # for mypy

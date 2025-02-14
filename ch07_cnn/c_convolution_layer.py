@@ -1,3 +1,5 @@
+from concurrent import futures
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -104,6 +106,7 @@ def col2im(
     filter_w: int,
     stride: int,
     pad: int,
+    use_threading: bool = False,
 ) -> NDArray[np.floating]:
     """Convert a column to an image for convolution.
 
@@ -122,6 +125,7 @@ def col2im(
         filter_w (int): Filter width.
         stride (int): Stride.
         pad (int): Padding.
+        use_threading (bool): Whether to use threading for parallel processing.
 
     Returns:
         NDArray[np.floating]: 4D array, with shape: (N, C, H, W).
@@ -145,14 +149,38 @@ def col2im(
     padded_img = np_zeros(
         shape=(n, c, h + 2 * pad + stride - 1, w + 2 * pad + stride - 1)
     )
+
+    def add_to_padded_img(y: int, y_max: int, x: int) -> None:
+        x_max = x + stride * w_out
+        # Directly use the slice objects in np.add.at
+        np.add.at(
+            padded_img,
+            (
+                slice(None),
+                slice(None),
+                slice(y, y_max, stride),
+                slice(x, x_max, stride),
+            ),  # type: ignore
+            shapped_col[:, :, y, x, :, :],
+        )
+
     # use filter_h/filter_w instead out_h/out_w to speed up.
-    for y in range(filter_h):
-        y_max = y + stride * h_out
-        for x in range(filter_w):
-            x_max = x + stride * w_out
-            padded_img[:, :, y:y_max:stride, x:x_max:stride] += shapped_col[
-                :, :, y, x, :, :
-            ]
+    if not use_threading:
+        for y in range(filter_h):
+            y_max = y + stride * h_out
+            for x in range(filter_w):
+                add_to_padded_img(y, y_max, x)
+    else:
+        # Use ThreadPoolExecutor for parallel processing
+        with futures.ThreadPoolExecutor() as executor:
+            future_list = []
+            for y in range(filter_h):
+                y_max = y + stride * h_out
+                for x in range(filter_w):
+                    future_list.append(
+                        executor.submit(add_to_padded_img, y, y_max, x)
+                    )
+            futures.wait(future_list)
 
     # Return the image with padding removed (to match the original dimensions)
     return padded_img[:, :, pad : (pad + h), pad : (pad + w)]
@@ -321,6 +349,7 @@ class Conv2d(Layer):
             filter_w=f_w,
             stride=self._stride,
             pad=self._pad,
+            use_threading=True,
         )
 
     def param_grads(self) -> dict[str, NDArray[np.floating]]:

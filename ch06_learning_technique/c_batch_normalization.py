@@ -377,8 +377,10 @@ class BatchNorm2d(Layer):
         """
         assert self._x_hat is not None
         if self._affine:
-            self._dgamma = np.sum(dout * self._x_hat, axis=(0, 2, 3))
-            self._dbeta = np.sum(dout, axis=(0, 2, 3))
+            self._dgamma = np.sum(
+                dout * self._x_hat, axis=(0, 2, 3), keepdims=True
+            )
+            self._dbeta = np.sum(dout, axis=(0, 2, 3), keepdims=True)
             d_x_hat = dout * self._params[self._gamma_name]
         else:
             d_x_hat = dout
@@ -404,6 +406,8 @@ class BatchNorm2d(Layer):
             * np.sum(-2 * self._x_minus_mean, axis=(0, 2, 3))
             / d_x_hat.size
         ).astype(get_default_type())
+        d_var = d_var.reshape(1, -1, 1, 1)
+        d_mean = d_mean.reshape(1, -1, 1, 1)
         d_x: NDArray[np.floating] = (
             d_x_hat_dot_divide_sqrt_var
             + d_var * np_float(2) * self._x_minus_mean / n
