@@ -51,6 +51,12 @@ from ch06_learning_technique.d_reg_dropout import Dropout, Dropout2d
 from ch06_learning_technique.d_reg_weight_decay import Sequential
 from ch07_cnn.c_convolution_layer import Conv2d
 from ch07_cnn.d_pooling_layer import AvgPool2d, Flatten, MaxPool2d
+from ch08_deep_learning.b_layer_block import (
+    BottleneckBlock,
+    Conv2dGroup,
+    GlobalAvgPooling,
+    ResBlock,
+)
 from common.base import Layer, LayerConfig
 
 
@@ -117,8 +123,8 @@ class AffineConfig(LayerConfig):
     def create(
         self, parameters: dict[str, NDArray[np.floating]] | None = None
     ) -> Layer:
-        w_name = f"W_{self.param_suffix}"
-        b_name = f"b_{self.param_suffix}"
+        w_name = f"fc{self.param_suffix}_w"
+        b_name = f"fc{self.param_suffix}_b"
         if parameters is not None:
             assert_keys_if_params_provided(parameters, [w_name, b_name])
             w = parameters[w_name]
@@ -195,10 +201,10 @@ class BatchNorm1dConfig(LayerConfig):
         tuple[str, NDArray[np.floating]],
         tuple[str, NDArray[np.floating]],
     ]:
-        gamma_name = f"gamma_{self.param_suffix}"
-        beta_name = f"beta_{self.param_suffix}"
-        mean_name = f"running_mean_{self.param_suffix}"
-        var_name = f"running_var_{self.param_suffix}"
+        gamma_name = f"bn{self.param_suffix}_gamma"
+        beta_name = f"bn{self.param_suffix}_beta"
+        mean_name = f"bn{self.param_suffix}_running_mean"
+        var_name = f"bn{self.param_suffix}_running_var"
         if parameters is not None:
             assert_keys_if_params_provided(
                 parameters, [gamma_name, beta_name, mean_name, var_name]
@@ -297,8 +303,8 @@ class Conv2dConfig(LayerConfig):
     def create(
         self, parameters: dict[str, NDArray[np.floating]] | None = None
     ) -> Layer:
-        w_name = f"W_{self.param_suffix}"
-        b_name = f"b_{self.param_suffix}"
+        w_name = f"conv{self.param_suffix}_w"
+        b_name = f"conv{self.param_suffix}_b"
         if parameters is not None:
             assert_keys_if_params_provided(parameters, [w_name, b_name])
             w = parameters[w_name]
@@ -320,7 +326,106 @@ class Conv2dConfig(LayerConfig):
             )
 
         return Conv2d(
-            W=(w_name, w), b=(b_name, b), stride=self.stride, pad=self.pad
+            w=(w_name, w), b=(b_name, b), stride=self.stride, pad=self.pad
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class Conv2dGroupConfig(LayerConfig):
+    """Configuration for the Conv2dGroup layer.
+
+    Diagram:
+        Input: (N, C, H, W)
+        ├── Conv2d (group 1)
+        │   Input: (N, C/G, H, W)
+        │   Output: (N, C_out1, H_out, W_out)
+        ├── Conv2d (group 2)
+        │   Input: (N, C/G, H, W)
+        │   Output: (N, C_out2, H_out, W_out)
+        ├── ...
+        └── Conv2d (group G)
+            Input: (N, C/G, H, W)
+            Output: (N, C_outG, H_out, W_out)
+        Output: (N, C_out, H_out, W_out)
+            where C_out = C_out1 + ... + C_outG
+    """
+
+    in_channels: int
+    """The number of input channels."""
+
+    out_channels: int
+    """The number of output channels."""
+
+    group: int
+
+    param_suffix: str
+    """The suffix for the layer's parameter, which should be unique.
+
+    The name of the parameter will be `W_{param_suffix}` and `b_{param_suffix}`.
+    """
+
+    kernel_size: tuple[int, int]
+    """The size of the kernel."""
+
+    stride: int = 1
+    """The stride of the kernel."""
+
+    pad: int = 0
+    """The padding size."""
+
+    param_init: ParameterInitConfig = ParameterInitConfig(
+        initializer="he_normal", mode="fan_in", weight_init_std=None
+    )
+
+    def __post_init__(self) -> None:
+        assert self.in_channels % self.group == 0
+        assert self.out_channels % self.group == 0
+
+    def create(
+        self, parameters: dict[str, NDArray[np.floating]] | None = None
+    ) -> Layer:
+        w_names = [
+            f"conv{self.param_suffix}_{idx}_w" for idx in range(self.group)
+        ]
+        b_names = [
+            f"conv{self.param_suffix}_{idx}_b" for idx in range(self.group)
+        ]
+        if parameters is not None:
+            assert_keys_if_params_provided(parameters, w_names + b_names)
+            ws = [parameters[w_name] for w_name in w_names]
+            bs = [parameters[b_name] for b_name in b_names]
+        else:
+            ws = [
+                generate_init_weight(
+                    weight_shape=(
+                        int(self.out_channels / self.group),
+                        int(self.in_channels / self.group),
+                        *self.kernel_size,
+                    ),
+                    initializer=self.param_init.initializer,
+                    mode=self.param_init.mode,
+                    stddev=self.param_init.weight_init_std,
+                )
+                for _ in range(self.group)
+            ]
+            bs = [
+                generate_init_bias(
+                    bias_shape=(int(self.out_channels / self.group),),
+                    initializer="zeros",
+                )
+                for _ in range(self.group)
+            ]
+
+        return Conv2dGroup(
+            conv_layers=[
+                Conv2d(
+                    w=(w_names[idx], ws[idx]),
+                    b=(b_names[idx], bs[idx]),
+                    stride=self.stride,
+                    pad=self.pad,
+                )
+                for idx in range(self.group)
+            ]
         )
 
 
@@ -361,6 +466,16 @@ class FlattenConfig(LayerConfig):
 
 
 @dataclass(frozen=True, kw_only=True)
+class GlobalAvgPoolingConfig(LayerConfig):
+    """Configuration for the GlobalAvgPooling layer."""
+
+    def create(
+        self, parameters: dict[str, NDArray[np.floating]] | None = None
+    ) -> Layer:
+        return GlobalAvgPooling()
+
+
+@dataclass(frozen=True, kw_only=True)
 class MaxPool2dConfig(AvgPool2dConfig):
     """Configuration for the 2D max pooling layer."""
 
@@ -384,6 +499,280 @@ class ReLUConfig(LayerConfig):
         self, parameters: dict[str, NDArray[np.floating]] | None = None
     ) -> Layer:
         return ReLU(inplace=self.inplace)
+
+
+@dataclass(frozen=True, kw_only=True)
+class ResBlockConfig(LayerConfig):
+    """Configuration for the ResBlock layer.
+
+    Diagram:
+        input -> Conv1 (3x3) -> BatchNorm -> ReLU ->
+                Conv2 (3x3) -> BatchNorm -> + -> ReLU -> output
+          |_________________________________|
+    """
+
+    in_channel: int
+
+    out_channel: int
+
+    stride: int
+
+    param_suffix: str
+    """The suffix for the layer's parameter, which should be unique.
+
+    The name of the parameter will be `W_{param_suffix}` and `b_{param_suffix}`.
+    """
+
+    param_init: ParameterInitConfig = ParameterInitConfig(
+        initializer="he_normal", mode="fan_in", weight_init_std=None
+    )
+
+    def create(
+        self, parameters: dict[str, NDArray[np.floating]] | None = None
+    ) -> Layer:
+        conv1 = Conv2dConfig(
+            in_channels=self.in_channel,
+            out_channels=self.out_channel,
+            param_suffix=f"{self.param_suffix}_1",
+            kernel_size=(3, 3),
+            stride=self.stride,
+            pad=1,
+            param_init=self.param_init,
+        )
+        batch_norm1 = BatchNorm2dConfig(
+            num_feature=self.out_channel, param_suffix=f"{self.param_suffix}_1"
+        )
+        conv2 = Conv2dConfig(
+            in_channels=self.out_channel,
+            out_channels=self.out_channel,
+            param_suffix=f"{self.param_suffix}_2",
+            kernel_size=(3, 3),
+            stride=1,
+            pad=1,
+            param_init=self.param_init,
+        )
+        batch_norm2 = BatchNorm2dConfig(
+            num_feature=self.out_channel, param_suffix=f"{self.param_suffix}_2"
+        )
+        # Shortcut (skip connection) to match the dimensions of the output
+        shortcut = []
+        if self.stride > 1 or (self.in_channel != self.out_channel):
+            shortcut_configs = [
+                Conv2dConfig(
+                    in_channels=self.in_channel,
+                    out_channels=self.out_channel,
+                    param_suffix=f"{self.param_suffix}_shortcut",
+                    kernel_size=(1, 1),
+                    stride=self.stride,
+                    pad=0,
+                    param_init=self.param_init,
+                ),
+                BatchNorm2dConfig(
+                    num_feature=self.out_channel,
+                    param_suffix=f"{self.param_suffix}_shortcut",
+                ),
+            ]
+            shortcut = [
+                config.create(parameters) for config in shortcut_configs
+            ]
+        return ResBlock(
+            conv1=conv1.create(parameters),
+            batch_norm1=batch_norm1.create(parameters),
+            conv2=conv2.create(parameters),
+            batch_norm2=batch_norm2.create(parameters),
+            shortcut=shortcut,
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class ResBlocksConfig(LayerConfig):
+    """Configuration for the ResBlock with multi layers.
+
+    Diagram:
+        input -> Conv1 (3x3) -> BatchNorm -> ReLU ->
+                Conv2 (3x3) -> BatchNorm -> + -> ReLU -> output
+          |_________________________________|
+    """
+
+    in_channel: int
+
+    out_channel: int
+
+    stride: int
+
+    layer: int
+
+    param_suffix: str
+    """The suffix for the layer's parameter, which should be unique.
+
+    The name of the parameter will be `W_{param_suffix}` and `b_{param_suffix}`.
+    """
+
+    param_init: ParameterInitConfig = ParameterInitConfig(
+        initializer="he_normal", mode="fan_in", weight_init_std=None
+    )
+
+    def create(
+        self, parameters: dict[str, NDArray[np.floating]] | None = None
+    ) -> Layer:
+        layers = tuple(
+            ResBlockConfig(
+                in_channel=self.in_channel if idx == 0 else self.out_channel,
+                out_channel=self.out_channel,
+                stride=self.stride if idx == 0 else 1,
+                param_suffix=f"{self.param_suffix}_{idx + 1}",
+                param_init=self.param_init,
+            ).create(parameters)
+            for idx in range(self.layer)
+        )
+        return Sequential(layers=layers)
+
+
+@dataclass(frozen=True, kw_only=True)
+class BottleneckBlockConfig(LayerConfig):
+    """Configuration for the BottleneckBlock layer.
+
+    Diagram:
+        input -> Conv1 (1x1, reduce channels) -> BatchNorm -> ReLU ->
+                Conv2 (3x3, main conv) -> BatchNorm -> ReLU ->
+                Conv3 (1x1, restore channels) -> BatchNorm -> + -> ReLU -> output
+          |___________________________________________________|
+    """
+
+    in_channel: int
+
+    bottle_channel: int
+
+    out_channel: int
+
+    stride: int
+
+    param_suffix: str
+    """The suffix for the layer's parameter, which should be unique.
+
+    The name of the parameter will be `W_{param_suffix}` and `b_{param_suffix}`.
+    """
+
+    param_init: ParameterInitConfig = ParameterInitConfig(
+        initializer="he_normal", mode="fan_in", weight_init_std=None
+    )
+
+    def create(
+        self, parameters: dict[str, NDArray[np.floating]] | None = None
+    ) -> Layer:
+        conv1 = Conv2dConfig(
+            in_channels=self.in_channel,
+            out_channels=self.bottle_channel,
+            param_suffix=f"{self.param_suffix}_1",
+            kernel_size=(1, 1),
+            stride=1,
+            pad=0,
+            param_init=self.param_init,
+        )
+        batch_norm1 = BatchNorm2dConfig(
+            num_feature=self.bottle_channel,
+            param_suffix=f"{self.param_suffix}_1",
+        )
+        conv2 = Conv2dConfig(
+            in_channels=self.bottle_channel,
+            out_channels=self.bottle_channel,
+            param_suffix=f"{self.param_suffix}_2",
+            kernel_size=(3, 3),
+            stride=self.stride,
+            pad=1,
+            param_init=self.param_init,
+        )
+        batch_norm2 = BatchNorm2dConfig(
+            num_feature=self.bottle_channel,
+            param_suffix=f"{self.param_suffix}_2",
+        )
+        conv3 = Conv2dConfig(
+            in_channels=self.bottle_channel,
+            out_channels=self.out_channel,
+            param_suffix=f"{self.param_suffix}_3",
+            kernel_size=(1, 1),
+            stride=1,
+            pad=0,
+            param_init=self.param_init,
+        )
+        batch_norm3 = BatchNorm2dConfig(
+            num_feature=self.out_channel, param_suffix=f"{self.param_suffix}_3"
+        )
+        shortcut = []
+        if self.stride > 1 or (self.in_channel != self.out_channel):
+            configs = [
+                Conv2dConfig(
+                    in_channels=self.in_channel,
+                    out_channels=self.out_channel,
+                    param_suffix=f"{self.param_suffix}_shortcut",
+                    kernel_size=(1, 1),
+                    stride=self.stride,
+                    pad=0,
+                    param_init=self.param_init,
+                ),
+                BatchNorm2dConfig(
+                    num_feature=self.out_channel,
+                    param_suffix=f"{self.param_suffix}_shortcut",
+                ),
+            ]
+            shortcut = [config.create(parameters) for config in configs]
+        return BottleneckBlock(
+            conv1=conv1.create(parameters),
+            conv2=conv2.create(parameters),
+            conv3=conv3.create(parameters),
+            batch_norm1=batch_norm1.create(parameters),
+            batch_norm2=batch_norm2.create(parameters),
+            batch_norm3=batch_norm3.create(parameters),
+            shortcut=shortcut,
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class BottleneckBlocksConfig(LayerConfig):
+    """Configuration for the BottleneckBlocks with multi layer.
+
+    Diagram:
+        input -> Conv1 (1x1, reduce channels) -> BatchNorm -> ReLU ->
+                Conv2 (3x3, main conv) -> BatchNorm -> ReLU ->
+                Conv3 (1x1, restore channels) -> BatchNorm -> + -> ReLU -> output
+          |___________________________________________________|
+    """
+
+    in_channel: int
+
+    bottle_channel: int
+
+    out_channel: int
+
+    stride: int
+
+    layer: int
+
+    param_suffix: str
+    """The suffix for the layer's parameter, which should be unique.
+
+    The name of the parameter will be `W_{param_suffix}` and `b_{param_suffix}`.
+    """
+
+    param_init: ParameterInitConfig = ParameterInitConfig(
+        initializer="he_normal", mode="fan_in", weight_init_std=None
+    )
+
+    def create(
+        self, parameters: dict[str, NDArray[np.floating]] | None = None
+    ) -> Layer:
+        layers = tuple(
+            BottleneckBlockConfig(
+                in_channel=self.in_channel if idx == 0 else self.out_channel,
+                bottle_channel=self.bottle_channel,
+                out_channel=self.out_channel,
+                stride=self.stride if idx == 0 else 1,
+                param_suffix=f"{self.param_suffix}_{idx + 1}",
+                param_init=self.param_init,
+            ).create(parameters)
+            for idx in range(self.layer)
+        )
+        return Sequential(layers=layers)
 
 
 @dataclass(frozen=True, kw_only=True)

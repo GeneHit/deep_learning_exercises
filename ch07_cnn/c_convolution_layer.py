@@ -27,6 +27,19 @@ def im2col(
 ) -> NDArray[np.floating]:
     """Convert an image to a column for convolution.
 
+    You have to avoid using 'for' loop, otherwise the processing time will be
+    very long making train/test too slow.
+
+    The intuitive principle of (1, c, h, w) imgage:
+        get a filter-size img data over channel in order
+                (i in h, j in w)
+                        |-----------|
+                        | |-----------|
+                        | |  |------------|
+                        |-|  |      w     |
+                        |--|h  filter   |
+                channel   |------------|
+
     How to calculate the dimention of columns:
         channel = C
         batch_size = N
@@ -61,23 +74,29 @@ def col2im(
     filter_w: int,
     stride: int,
     pad: int,
+    use_threading: bool = False,
 ) -> NDArray[np.floating]:
     """Convert a column to an image for convolution.
+
+    You have to avoid using long 'for' loop, otherwise the processing time will
+    be very long making train/test too slow.
 
     Parameters:
         col : NDArray[np.floating]
             2D arraym with shape (N * H_out * W_out, C * FH * FW), where:
                 H_out = (H - FH + 2 * pad) // stride + 1
                 W_out = (W - FW + 2 * pad) // stride + 1
+            Usually, it is a gradient array in back propogation
         input_shape : tuple[int, int, int, int]
             Shape of the input data. The shape is assumed to be (N, C, H, W).
         filter_h (int): Filter height.
         filter_w (int): Filter width.
         stride (int): Stride.
         pad (int): Padding.
+        use_threading (bool): Whether to use threading for parallel processing.
 
     Returns:
-        reNDArray[np.floating]: 4D array, with shape: (N, C, H, W).
+        NDArray[np.floating]: 4D array, with shape: (N, C, H, W).
     """
     raise NotImplementedError
 
@@ -91,7 +110,7 @@ class Conv2d(Layer):
 
     def __init__(
         self,
-        W: tuple[str, NDArray[np.floating]],
+        w: tuple[str, NDArray[np.floating]],
         b: tuple[str, NDArray[np.floating]],
         stride: int = 1,
         pad: int = 0,
@@ -99,17 +118,18 @@ class Conv2d(Layer):
         """Initialize the layer.
 
         Parameters:
-            W: tuple[str, NDArray[np.floating]]
-                Weights, with [name, weight array]. The shape of array is:
-                    (filter_num, channel, filter_h, filter_w)
-                    or (Fn, C, FH, FW)
+            w: tuple[str, NDArray[np.floating]]
+                Weights, with [name, width array]. The shape of array is:
+                    (filter_num or output_channel, channel, filter_h, filter_w)
+                    or (FN, C, FH, FW)
             b: tuple[str, NDArray[np.floating]]
-                Biases, with [name, array]. The shape of array is: (filter_num,)
+                Biases, with [name, array]. The shape of array is: (1, filter_num)
             stride (int): Stride.
             pad (int): Padding.
         """
-        self._W_filter = W
-        self._b = b
+        self._w_name = w[0]
+        self._b_name = b[0]
+        self._params: dict[str, NDArray[np.floating]] = {w[0]: w[1], b[0]: b[1]}
         self._stride = stride
         self._pad = pad
 
@@ -125,59 +145,59 @@ class Conv2d(Layer):
         """Forward pass of the layer.
 
         Dimention process:
-            1. Input data x: (N, C, H, W).
+            1). x -> im2col
+                (N, C, H, W) -> (N * H_out * W_out, C * FH * FW)
                 where:
-                    N: batch size
-                    C: channel
-                    H: height
-                    W: width
-            2. im2col: (N * H_out * W_out, C * FH * FW).
-                Where:
-                    filter_size = (F_n, C, FH, FW)
                     H_out = (H - FH + 2 * pad) // stride + 1
                     W_out = (W - FW + 2 * pad) // stride + 1
-            3. Filter matrix: (Fn, C * FH * FW).
-            4. Perform matrix multiplication: (N * H_out * W_out, Fn)
-                (N * H_out * W_out, C * FH * FW) * (Fn, C * FH * FW)'
-            5. Add the bias (1, Fn).
-            6. Reshape the output to: (N, Fn, H_out, W_out).
+            2). w (filter weight) -> w_col_T
+                (FN, C, FH, FW) -> (C * FH * FW, FN)
+            3). im2col @ w_col_T + b -> result -> out
+                (N * H_out * W_out, C * FH * FW) @ (C * FH * FW, FN) + (1, Fn)
+                -> (N * H_out * W_out, Fn) -> (N, F_n, H_out, W_out)
 
         Parameters:
             x: NDArray[np.floating]
-                Input data. The shape is assumed to be a 4D array:
-                    (batch_size, channel, height, width).
+                Input data. The shape is assumed to be a 4D (N, C, H, W) array,
+                where (batch_size, channel, height, width).
 
         Returns:
-            NDArray[np.floating]: Output data, with shape:
-                (C_out, filter_num, height, width).
+            convolution data : NDArray[np.floating]
+                convolution result, with shape (N, FN, H_out, W_out).
         """
         raise NotImplementedError
 
     def backward(self, dout: NDArray[np.floating]) -> NDArray[np.floating]:
         """Backward pass of the layer.
 
-        Backward Propagation Dimension Process for CNN
+        Backward Propagation Dimension Process for CNN:
 
-        dout: Gradient of loss w.r.t. output (N, F_n, H_out, W_out)
-
-        forward pass:
-            1) x -> im2col -> shaped_x
+        -forward pass:
+            1). x -> im2col
                 (N, C, H, W) -> (N * H_out * W_out, C * FH * FW)
-            2) shapedx * shaped_w + b  -> output -> reshaped to out
-                (N * H_out * W_out, C * FH * FW) * (Fn, C * FH * FW)' + (1, Fn)
+            2). w (filter weight) -> w_col_T
+                (FN, C, FH, FW) -> (C * FH * FW, FN)
+            3). im2col @ w_col_T + b -> result -> out
+                (N * H_out * W_out, C * FH * FW) @ (C * FH * FW, FN) + (1, Fn)
                 -> (N * H_out * W_out, Fn) -> (N, F_n, H_out, W_out)
 
-        backward pass:
-            1) dout -> reshaped to output's shape -> d_output
-                (N, F_n, H_out, W_out) -> (N * H_out * W_out, F_n)
-            2) d_shaped_w = im2col.T * d_output
-                (C * FH * FW, N * H_out * W_out) * (N * H_out * W_out, F_n)
-                = (C * FH * FW, F_n)
-                ---> d_w = d_shaped_w.reshape(F_n, C, FH, FW)
-            3) d_b = sum(d_output) over row
-                (1, F_n) = sum((N, F_n, H_out, W_out)) over (N, H_out, W_out)
-            4) d_shaped_x = d_output * shaped_w.T
-                ---> d_x = col2im(d_shaped_x)
+        -backward pass:
+            1) dout -> d_result
+                (N, FN, H_out, W_out) -> (N * H_out * W_out, FN)
+            2) d_b = sum(d_output) over row
+                (1, FN) = sum((N * H_out * W_out, FN)) over row
+            3) dw
+                a. d_w_col_T = im2col.T @ d_result
+                    (C * FH * FW, FN)
+                    = (C * FH * FW, N * H_out * W_out) @ (N * H_out * W_out, FN)
+                b. d_w_col_T -> d_w
+                    -> (FN, C, FH, FW)
+            4) dx
+                a. d_im2col = d_result @ w_col_T.T
+                    (N * H_out * W_out, C * FH * FW)
+                    = (N * H_out * W_out, FN) @ (C * FH * FW, FN).T
+                b. d_im2col ---col2im---> dx
+                    -> (N, C, H, W)
 
         Parameters:
             dout: NDArray[np.floating]

@@ -15,7 +15,7 @@ class TestMaxPool2d:
             # Example 1: Simple 2x2 pooling, no padding
             (
                 (2, 2),
-                2,
+                1,
                 0,
                 np_array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
                 np_array([[[[5, 6], [8, 9]]]]),  # expected_output
@@ -23,7 +23,7 @@ class TestMaxPool2d:
             # Example 2: Single channel, larger stride
             (
                 (2, 2),
-                3,
+                2,
                 0,
                 np_array(
                     [
@@ -60,7 +60,7 @@ class TestMaxPool2d:
             # Example 1: Backpropagation for 2x2 pooling, no padding
             (
                 (2, 2),
-                2,
+                1,
                 0,
                 np_array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
                 np_array([[[[1, 1], [1, 1]]]]),  # dout
@@ -69,7 +69,7 @@ class TestMaxPool2d:
             # Example 2: Backpropagation for a larger input
             (
                 (2, 2),
-                2,
+                1,
                 0,
                 np_array([[[[1, 3, 1], [4, 2, 6], [7, 5, 9]]]]),
                 np_array([[[[2, 3], [4, 5]]]]),
@@ -103,15 +103,15 @@ class TestAvgPool2d:
             # Example 1: Simple 2x2 pooling, no padding
             (
                 (2, 2),
-                2,
+                1,
                 0,
                 np_array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
-                np_array([[[[3, 4.5], [7.5, 9]]]]),  # expected_output
+                np_array([[[[3, 4], [6, 7]]]]),  # expected_output
             ),
             # Example 2: Single channel, stride = 3
             (
                 (2, 2),
-                3,
+                2,
                 0,
                 np_array(
                     [
@@ -148,22 +148,24 @@ class TestAvgPool2d:
             # Example 1: Backpropagation for 2x2 pooling, no padding
             (
                 (2, 2),
-                2,
+                1,
                 0,
                 np_array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),  # input_x
                 np_array([[[[1, 1], [1, 1]]]]),  # dout
                 np_array(
-                    [[[[0.25, 0.25, 0], [0.25, 0.25, 0], [0, 0, 0]]]]
+                    [[[[0.25, 0.5, 0.25], [0.5, 1, 0.5], [0.25, 0.5, 0.25]]]]
                 ),  # expected_dx
             ),
             # Example 2: Backpropagation for larger input
             (
                 (2, 2),
-                2,
+                1,
                 0,
                 np_array([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]),
                 np_array([[[[2, 3], [4, 5]]]]),
-                np_array([[[[0.5, 0.5, 0], [0.5, 0.5, 0], [0, 0, 0]]]]),
+                np_array(
+                    [[[[0.5, 1.25, 0.75], [1.5, 3.5, 2], [1, 2.25, 1.25]]]]
+                ),
             ),
         ],
     )

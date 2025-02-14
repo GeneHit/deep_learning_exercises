@@ -11,7 +11,9 @@ def random_rotation(
     """Randomly rotate the image within a specified angle range."""
     angle = np.random.uniform(-max_angle, max_angle)
     rotated_image: NDArray[np.floating] = np.asarray(
-        rotate(image, angle, reshape=False, mode="constant", cval=0.0),
+        rotate(
+            image, angle, axes=(1, 2), reshape=False, mode="constant", cval=0.0
+        ),
         dtype=get_default_type(),
     )
     return rotated_image
@@ -21,10 +23,11 @@ def random_shift(
     image: NDArray[np.floating], max_shift: int = 2
 ) -> NDArray[np.floating]:
     """Randomly shift the image within a specified pixel range."""
+    assert image.ndim == 3
     shift_x = np.random.uniform(-max_shift, max_shift)
     shift_y = np.random.uniform(-max_shift, max_shift)
     shift_image: NDArray[np.floating] = np.asarray(
-        shift(image, [shift_x, shift_y], mode="constant", cval=0.0),
+        shift(image, [0, shift_x, shift_y], mode="constant", cval=0.0),
         dtype=get_default_type(),
     )
     return shift_image
@@ -57,7 +60,7 @@ def augment_mnist_data(
     Perform data augmentation on the MNIST dataset.
 
     Args:
-        x_train (NDArray[np.floating]): Training images, shape (N, H, W).
+        x_train (NDArray[np.floating]): Training images, shape (N, C, H, W).
         t_train (NDArray[np.floating]): Training labels, shape (N,).
         augmentation_factor (float): The multiplier for the augmented dataset size.
                                      - augmentation_factor > 1: Increase dataset size.
@@ -66,7 +69,7 @@ def augment_mnist_data(
 
     Returns:
         Tuple[NDArray[np.floating], NDArray[np.floating]]:
-            - Augmented training images (NDArray[np.floating]), shape (M, H, W).
+            - Augmented training images (NDArray[np.floating]), shape (M, C, H, W).
             - Corresponding labels for the augmented images (NDArray[np.floating]), shape (M,).
     """
     if random_seed is not None:
@@ -82,9 +85,7 @@ def augment_mnist_data(
 
     # Case 1: Reduce dataset size (augmentation_factor < 1.0)
     if augmentation_factor < 1.0:
-        sampled_indices = np.random.choice(
-            num_original, target_size, replace=False
-        )
+        sampled_indices = np.random.choice(num_original, target_size)
         return x_train[sampled_indices], t_train[sampled_indices]
 
     # Case 2: Increase dataset size (augmentation_factor > 1.0)
