@@ -1,4 +1,4 @@
-# More Exercises (TODO)
+# More Exercises
 
 In this section, after we practice the deep neural network in the book,
 we will explore additional exercises to deepen your understanding of
@@ -35,7 +35,7 @@ dynamic approach to building neural networks. It is known for its ease of use
 and efficient memory management, making it a popular choice for both research
 and production.
 
-### TensorFlow
+### TensorFlow [TODO]
 TensorFlow is an open-source deep learning framework developed by Google. It
 provides a comprehensive ecosystem for building and deploying machine learning
 models. TensorFlow is widely used in both academia and industry for its
@@ -57,14 +57,14 @@ errors caused by low precision.
 - **Gradient Scaling**: Scale up the gradients of the loss function to prevent
 underflow in FP16, then scale them back to the original value during updates.
 
-### Early Stopping
+### Early Stopping [TODO]
 Early stopping is a technique to prevent overfitting by monitoring the model's
 performance on a validation set and stopping the training when the performance
 starts to degrade. Implementing early stopping in your training process will
 help you understand how to find the optimal point to stop training and avoid
 overfitting.
 
-### Transfer Learning and Fine-Tuning
+### Transfer Learning and Fine-Tuning [TODO]
 Transfer learning uses a pre-trained model from one task as a starting point
 for a new, related task. This method saves time and resources and often
 improves performance, especially when the new task has limited data.
