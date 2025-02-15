@@ -2,7 +2,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from ch06_learning_technique.a_optimization import SGD
-from ch06_learning_technique.d_reg_weight_decay import LayerTraier
+from ch06_learning_technique.d_reg_weight_decay import LayerTrainer
 from common.evaluation import single_label_accuracy
 from common.layer_config import (
     AffineConfig,
@@ -62,7 +62,7 @@ def hyper_parameter_optimization(
         network = config.create()
 
         # Train the network
-        trainer = LayerTraier(
+        trainer = LayerTrainer(
             network=network,
             loss=SoftmaxWithLossConfig().create(),
             evaluation_fn=single_label_accuracy,

@@ -1,7 +1,7 @@
 from typing import TypeAlias
 
 from ch06_learning_technique.a_optimization import Adam
-from ch06_learning_technique.d_reg_weight_decay import LayerTraier, Sequential
+from ch06_learning_technique.d_reg_weight_decay import LayerTrainer, Sequential
 from ch08_deep_learning.a_data_augmentation import augment_mnist_data
 from ch08_deep_learning.a_deep_2d_net import deep_2d_net_config
 from common.default_type_array import get_default_type, set_default_type
@@ -47,7 +47,7 @@ def train_and_test_deep_conv_net(
 
     network = net_config.create()
     optimizer = Adam(lr=0.001)
-    trainer = LayerTraier(
+    trainer = LayerTrainer(
         network=network,
         loss=SoftmaxWithLossConfig().create(),
         evaluation_fn=single_label_accuracy,
@@ -57,7 +57,7 @@ def train_and_test_deep_conv_net(
         x_test=x_test,
         t_test=t_test,
         epochs=20,
-        mini_batch_size=100,
+        mini_batch_size=300,
         evaluated_sample_per_epoch=1000,
     )
 

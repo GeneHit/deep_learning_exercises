@@ -3,7 +3,7 @@ import pytest
 from numpy.typing import NDArray
 
 from ch06_learning_technique.a_optimization import SGD
-from ch06_learning_technique.d_reg_weight_decay import LayerTraier
+from ch06_learning_technique.d_reg_weight_decay import LayerTrainer
 from ch06_learning_technique.test_d_overfit_exp import _plot_accuracy
 from common.evaluation import single_label_accuracy
 from common.layer_config import (
@@ -47,7 +47,7 @@ def overfit_nn(
         tuple[NDArray[np.floating], NDArray[np.floating]],
         tuple[NDArray[np.floating], NDArray[np.floating]],
     ],
-) -> LayerTraier:
+) -> LayerTrainer:
     """Train a overfitting NN without batch normalization and dropout.
 
     This is used for comparing the overfitting with weight decay and dropout.
@@ -72,7 +72,7 @@ def overfit_nn(
     )
     network = config.create()
     optimizer = SGD(lr=0.01)
-    trainer = LayerTraier(
+    trainer = LayerTrainer(
         network=network,
         loss=SoftmaxWithLossConfig().create(),
         evaluation_fn=single_label_accuracy,
@@ -95,7 +95,7 @@ def overfit_nn(
 
 
 def test_batch_normalization(
-    overfit_nn: LayerTraier,
+    overfit_nn: LayerTrainer,
     mnist_data: tuple[
         tuple[NDArray[np.floating], NDArray[np.floating]],
         tuple[NDArray[np.floating], NDArray[np.floating]],
@@ -127,7 +127,7 @@ def test_batch_normalization(
     )
     network = config.create()
     optimizer = SGD(lr=0.01)
-    trainer = LayerTraier(
+    trainer = LayerTrainer(
         network=network,
         loss=SoftmaxWithLossConfig().create(),
         evaluation_fn=single_label_accuracy,

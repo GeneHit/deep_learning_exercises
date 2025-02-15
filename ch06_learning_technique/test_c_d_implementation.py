@@ -3,7 +3,7 @@ import pytest
 from numpy.typing import NDArray
 
 from ch06_learning_technique.a_optimization import SGD
-from ch06_learning_technique.d_reg_weight_decay import LayerTraier
+from ch06_learning_technique.d_reg_weight_decay import LayerTrainer
 from common.default_type_array import np_array
 from common.evaluation import single_label_accuracy
 from common.layer_config import (
@@ -72,7 +72,7 @@ def test_multi_layer_nn(
     )
     network = config.create()
     optimizer = SGD(lr=0.01)
-    trainer = LayerTraier(
+    trainer = LayerTrainer(
         network=network,
         loss=SoftmaxWithLossConfig().create(),
         evaluation_fn=single_label_accuracy,
@@ -127,7 +127,7 @@ def test_batch_normalization_by_multi_layer_nn(
     )
     network = config.create()
     optimizer = SGD(lr=0.01)
-    trainer = LayerTraier(
+    trainer = LayerTrainer(
         network=network,
         loss=SoftmaxWithLossConfig().create(),
         evaluation_fn=single_label_accuracy,
@@ -184,7 +184,7 @@ def test_dropout_by_multi_layer_nn(
     )
     network = config.create()
     optimizer = SGD(lr=0.01)
-    trainer = LayerTraier(
+    trainer = LayerTrainer(
         network=network,
         loss=SoftmaxWithLossConfig().create(),
         evaluation_fn=single_label_accuracy,

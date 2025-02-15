@@ -19,8 +19,9 @@ key_file = {
     "test_label": "t10k-labels-idx1-ubyte.gz",
 }
 
-dataset_dir = os.path.dirname(os.path.abspath(__file__))
-save_file = dataset_dir + "/mnist.pkl"
+current_dir = os.path.dirname(os.path.abspath(__file__))
+dataset_dir = current_dir + "/MNIST/raw"
+save_file = current_dir + "/MNIST/mnist.pkl"
 
 # train_num = 60000
 # test_num = 10000

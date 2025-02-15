@@ -76,7 +76,7 @@ class Sequential(Layer):
             pickle.dump(params, f)
 
 
-class LayerTraier(Trainer):
+class LayerTrainer(Trainer):
     """A trainer for training a neural network.
 
     This is for the network that is based on the Layer class.
@@ -157,13 +157,16 @@ class LayerTraier(Trainer):
         self._name = name
 
         self._net_params = self._network.named_params()
-        self._train_acc_history: list[float] = []
-        self._test_acc_history: list[float] = []
+        self._reset_history()
+
+    def _reset_history(self) -> None:
+        self.runnig_losses: list[float] = []
+        self.train_acc_history: list[float] = []
+        self.test_acc_history: list[float] = []
         self._final_accuracy: tuple[float, float] | None = None
 
     def train(self) -> None:
-        self._train_acc_history = []
-        self._test_acc_history = []
+        self._reset_history()
 
         self._network.train(True)
         # tqdm progress bar for epochs
@@ -187,33 +190,17 @@ class LayerTraier(Trainer):
         if self._final_accuracy is not None:
             return self._final_accuracy
 
-        def get_final_test_accuracy() -> float:
-            if (
-                self._evaluate_test_data
-                and self._evaluated_sample_per_epoch is None
-            ):
-                return self._test_acc_history[-1]
-            y = self._network.forward(self._x_test)
-            return self._evaluation_fn(y, self._t_test)
-
-        def get_final_train_accuracy() -> float:
-            if (
-                self._evaluate_train_data
-                and self._evaluated_sample_per_epoch is None
-            ):
-                return self._train_acc_history[-1]
-            y = self._network.forward(self._x_train)
-            return self._evaluation_fn(y, self._t_train)
-
         self._final_accuracy = (
-            get_final_train_accuracy(),
-            get_final_test_accuracy(),
+            self._evaluate(
+                x=self._x_train, t=self._t_train, process="Train Acc"
+            ),
+            self._evaluate(x=self._x_test, t=self._t_test, process="Test Acc"),
         )
         return self._final_accuracy
 
     def get_history_accuracy(self) -> tuple[list[float], list[float]]:
         """Get the history of the training and test accuracy."""
-        return self._train_acc_history, self._test_acc_history
+        return self.train_acc_history, self.test_acc_history
 
     def _evaluate_if_necessary(self, epoch: int) -> None:
         if not self._evaluate_train_data and not self._evaluate_test_data:
@@ -229,15 +216,12 @@ class LayerTraier(Trainer):
                 x_train_sample = self._x_train[:num]
                 t_train_sample = self._t_train[:num]
 
-            y = self._network.forward(x_train_sample)
-            train_accuracy = self._evaluation_fn(y, t_train_sample)
-            self._train_acc_history.append(train_accuracy)
-            if self._verbose:
-                loss = self._loss.forward_to_loss(y, t_train_sample)
-                print(
-                    f"Epoch {epoch + 1} Trainning: Acc {train_accuracy:.4f}; "
-                    f"Loss {loss:.4f}"
-                )
+            train_acc = self._evaluate(
+                x=x_train_sample,
+                t=t_train_sample,
+                process=f"Epoch {epoch + 1} Training",
+            )
+            self.train_acc_history.append(train_acc)
 
         # output the test accuracy if necessary
         if self._evaluate_test_data:
@@ -246,18 +230,36 @@ class LayerTraier(Trainer):
                 num = self._evaluated_sample_per_epoch
                 x_test_sample = self._x_test[:num]
                 t_test_sample = self._t_test[:num]
-            y = self._network.forward(x_test_sample)
-            test_accuracy = self._evaluation_fn(y, t_test_sample)
-            self._test_acc_history.append(test_accuracy)
-            if self._verbose:
-                loss = self._loss.forward_to_loss(y, t_test_sample)
-                print(
-                    f"Epoch {epoch + 1} Test: Acc {test_accuracy:.4f}; "
-                    f"Loss {loss:.4f}"
-                )
+            test_acc = self._evaluate(
+                x=x_test_sample,
+                t=t_test_sample,
+                process=f"Epoch {epoch + 1} Test",
+            )
+            self.test_acc_history.append(test_acc)
 
         # set the network to the training mode
         self._network.train(True)
+
+    def _evaluate(
+        self, x: NDArray[np.floating], t: NDArray[np.floating], process: str
+    ) -> float:
+        num_batch = x.shape[0] // self._mini_batch_size
+        acc_sum = 0.0
+        loss_sum = 0.0
+        start_idx = 0
+        for _ in range(num_batch):
+            end_idx = start_idx + self._mini_batch_size
+            idx_range = range(start_idx, end_idx)
+            y = self._network.forward(x[idx_range])
+            acc_sum += self._evaluation_fn(y, t[idx_range])
+            if self._verbose:
+                loss_sum += self._loss.forward_to_loss(y, t[idx_range])
+            start_idx = end_idx
+
+        acc = acc_sum / num_batch
+        if self._verbose:
+            print(f"{process}: Acc {acc:.4f}; Loss {loss_sum / num_batch:.4f}")
+        return acc
 
     def _train_one_epoch(self) -> None:
         """Train the network for one epoch.
@@ -273,6 +275,7 @@ class LayerTraier(Trainer):
         num_train = self._x_train.shape[0]
         num_batch = num_train // self._mini_batch_size
 
+        loss = 0.0
         for _ in range(num_batch):
             selected_index = np.random.choice(num_train, self._mini_batch_size)
             x_batch = self._x_train[selected_index]
@@ -280,26 +283,24 @@ class LayerTraier(Trainer):
 
             # forward
             y = self._network.forward(x_batch)
-            loss = self._loss.forward_to_loss(y, t_batch)
+            loss += self._loss.forward_to_loss(y, t_batch)
             if self._weight_decay_lambda:
                 weight_decay = _weight_square_sum(self._net_params)
                 loss += 0.5 * float(self._weight_decay_lambda * weight_decay)
 
             # backward
-            # print("111111111111111111111111")
             dout = self._loss.backward(dout=np_ones(shape=(1, 1)))
             self._network.backward(dout)
 
             # get the gradient of the parameters
-            # print("2222222222222222222222222")
             grads = self._network.param_grads()
             _update_weight_decay_if_necessary(
                 grads, self._net_params, self._weight_decay_lambda
             )
 
             # update the parameters
-            # print("3333333333333333333333333")
             self._optimizer.one_step(self._net_params, grads)
+        self.runnig_losses.append(loss / num_batch)
 
 
 def _weight_square_sum(params: dict[str, NDArray[np.floating]]) -> np.floating:
