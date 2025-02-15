@@ -31,6 +31,8 @@ def single_label_accuracy(
         - For multi-label classification tasks (where samples may belong to multiple
           classes), use a different function.
     """
+    assert y.ndim == 2, "Predictions must be a 2D array"
+    assert t.ndim in (1, 2), "True labels must be a 1D or 2D array"
     y = np.argmax(y, axis=1)  # Get predicted class labels
     if t.ndim != 1:  # Convert one-hot encoded labels to class indices if needed
         t = np.argmax(t, axis=1)

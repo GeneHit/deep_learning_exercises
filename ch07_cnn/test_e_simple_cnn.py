@@ -1,5 +1,5 @@
 from ch06_learning_technique.a_optimization import Adam
-from ch06_learning_technique.d_reg_weight_decay import LayerTraier
+from ch06_learning_technique.d_reg_weight_decay import LayerTrainer
 from common.evaluation import single_label_accuracy
 from common.layer_config import (
     AffineConfig,
@@ -46,7 +46,7 @@ def test_simple_cnn() -> None:
     )
     network = config.create()
     optimizer = Adam(lr=0.01)
-    trainer = LayerTraier(
+    trainer = LayerTrainer(
         network=network,
         loss=SoftmaxWithLossConfig().create(),
         evaluation_fn=single_label_accuracy,
